@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
     <title>API Patterns - Документация</title>
     <style>
         * {
@@ -16,13 +16,18 @@
             background: #f5f5f5;
             color: #333;
             overflow-x: hidden;
+            font-size: 16px;
+            line-height: 1.5;
         }
 
+        /* Контейнер приложения */
         .app-container {
             display: flex;
             min-height: 100vh;
+            position: relative;
         }
 
+        /* Левая панель навигации */
         .sidebar {
             width: 280px;
             background: #ffffff;
@@ -32,22 +37,28 @@
             left: 0;
             height: 100vh;
             overflow-y: auto;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 1000;
             box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
         }
 
+        /* Основной контент */
         .main-content {
             flex: 1;
             margin-left: 280px;
             padding: 40px;
-            transition: margin-left 0.3s ease;
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 100%;
         }
 
+        /* Шапка сайдбара */
         .sidebar-header {
             padding: 30px 20px;
             border-bottom: 1px solid #e0e0e0;
             background: #fafafa;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         .logo {
@@ -57,12 +68,14 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-wrap: wrap;
         }
 
         .logo-icon {
             font-size: 1.8rem;
         }
 
+        /* Навигационное меню */
         .nav-menu {
             padding: 20px 0;
         }
@@ -80,7 +93,7 @@
             transition: all 0.2s;
             border-left: 3px solid transparent;
             gap: 12px;
-            font-size: 1rem;
+            font-size: 0.95rem;
         }
 
         .nav-link:hover {
@@ -100,30 +113,44 @@
             font-size: 1.2rem;
             width: 24px;
             text-align: center;
+            flex-shrink: 0;
         }
 
+        .nav-text {
+            flex: 1;
+        }
+
+        /* Кнопка бургер-меню */
         .mobile-menu-btn {
             display: none;
             position: fixed;
-            top: 20px;
-            left: 20px;
+            top: 16px;
+            left: 16px;
             z-index: 1100;
             background: #5a67d8;
             color: white;
             border: none;
-            width: 45px;
-            height: 45px;
-            border-radius: 8px;
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
             font-size: 1.5rem;
             cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
             transition: all 0.2s;
+            align-items: center;
+            justify-content: center;
         }
 
         .mobile-menu-btn:hover {
             background: #4c51bf;
+            transform: scale(1.02);
         }
 
+        .mobile-menu-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Оверлей для мобилок */
         .overlay {
             display: none;
             position: fixed;
@@ -134,38 +161,44 @@
             background: rgba(0, 0, 0, 0.5);
             z-index: 999;
             transition: opacity 0.3s ease;
+            backdrop-filter: blur(2px);
         }
 
+        /* Секции */
         .section {
             background: white;
             border-radius: 12px;
-            padding: 30px;
+            padding: clamp(20px, 5vw, 30px);
             margin-bottom: 30px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             border: 1px solid #e0e0e0;
+            transition: transform 0.2s;
         }
 
         .section h2 {
             color: #5a67d8;
             margin-bottom: 20px;
-            font-size: 1.8rem;
+            font-size: clamp(1.3rem, 5vw, 1.8rem);
             border-bottom: 2px solid #e9ecef;
             padding-bottom: 10px;
+            word-break: break-word;
         }
 
         .section h3 {
             color: #4a5568;
             margin: 20px 0 10px 0;
-            font-size: 1.3rem;
+            font-size: clamp(1.1rem, 4vw, 1.3rem);
         }
 
+        /* Эндпоинты */
         .endpoint {
             background: #fafbfc;
             border-left: 4px solid #5a67d8;
-            padding: 20px;
+            padding: clamp(15px, 4vw, 20px);
             margin: 20px 0;
             border-radius: 8px;
             border: 1px solid #e9ecef;
+            overflow-x: auto;
         }
 
         .endpoint-header {
@@ -182,8 +215,9 @@
             padding: 5px 12px;
             border-radius: 6px;
             font-weight: bold;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-family: monospace;
+            flex-shrink: 0;
         }
 
         .url {
@@ -192,8 +226,9 @@
             padding: 8px 12px;
             border-radius: 6px;
             color: #495057;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             word-break: break-all;
+            flex: 1;
         }
 
         .description {
@@ -202,6 +237,7 @@
             line-height: 1.6;
         }
 
+        /* Параметры */
         .params {
             background: white;
             border-radius: 8px;
@@ -225,26 +261,30 @@
 
         .param-type {
             color: #48bb78;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             margin-left: 10px;
         }
 
         .param-desc {
             color: #666;
             margin-top: 5px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
-        .example pre {
+        /* Блоки кода */
+        .example pre,
+        .code-block pre {
             background: #2d3748;
             color: #e2e8f0;
-            padding: 15px;
+            padding: clamp(12px, 3vw, 15px);
             border-radius: 8px;
             overflow-x: auto;
             font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             line-height: 1.5;
             margin: 10px 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
         }
 
         .response {
@@ -253,6 +293,7 @@
             padding: 15px;
             margin: 15px 0;
             border-radius: 8px;
+            overflow-x: auto;
         }
 
         .response pre {
@@ -261,12 +302,19 @@
             border-radius: 6px;
             overflow-x: auto;
             border: 1px solid #e0e0e0;
+            font-size: 0.8rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
         }
 
+        /* Таблица схемы */
         .schema-table {
             width: 100%;
             border-collapse: collapse;
             margin: 15px 0;
+            font-size: 0.85rem;
+            display: block;
+            overflow-x: auto;
         }
 
         .schema-table th,
@@ -274,6 +322,7 @@
             border: 1px solid #e0e0e0;
             padding: 10px;
             text-align: left;
+            vertical-align: top;
         }
 
         .schema-table th {
@@ -282,13 +331,10 @@
             color: #5a67d8;
         }
 
-        .schema-table td {
-            background: white;
-        }
-
+        /* Тестер API */
         .tester {
             background: #f8f9fa;
-            padding: 20px;
+            padding: clamp(15px, 4vw, 20px);
             border-radius: 12px;
             margin-top: 20px;
             border: 1px solid #e0e0e0;
@@ -297,12 +343,20 @@
         .tester input,
         .tester select,
         .tester button {
-            padding: 10px;
+            padding: 12px;
             margin: 10px 0;
             border: 1px solid #ddd;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 1rem;
             width: 100%;
+            font-family: inherit;
+        }
+
+        .tester input:focus,
+        .tester select:focus {
+            outline: none;
+            border-color: #5a67d8;
+            box-shadow: 0 0 0 3px rgba(90, 103, 216, 0.1);
         }
 
         .tester button {
@@ -310,12 +364,18 @@
             color: white;
             border: none;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: all 0.2s;
             font-weight: 500;
+            font-size: 1rem;
         }
 
         .tester button:hover {
             background: #4c51bf;
+            transform: translateY(-1px);
+        }
+
+        .tester button:active {
+            transform: translateY(0);
         }
 
         .result {
@@ -330,48 +390,71 @@
 
         .result pre {
             margin: 0;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
         }
 
+        /* Футер */
         .footer {
             text-align: center;
-            padding: 30px;
+            padding: 30px 20px;
             color: #6c757d;
             border-top: 1px solid #e0e0e0;
             margin-top: 20px;
             background: white;
+            font-size: 0.85rem;
         }
 
-        .code-block {
-            background: #2d3748;
-            color: #e2e8f0;
-            padding: 15px;
-            border-radius: 8px;
-            overflow-x: auto;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
+        /* Списки */
+        ul, ol {
+            padding-left: clamp(20px, 5vw, 30px);
+            margin: 15px 0;
+        }
+
+        li {
+            margin: 8px 0;
             line-height: 1.5;
-            margin: 10px 0;
         }
 
+        /* Код в тексте */
+        code {
+            background: #f1f3f5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.85em;
+            color: #e53e3e;
+            word-break: break-word;
+        }
+
+        /* Адаптация для планшетов и десктопов */
+        @media (max-width: 1024px) {
+            .main-content {
+                padding: 30px;
+            }
+        }
+
+        /* Адаптация для мобильных устройств */
         @media (max-width: 768px) {
             .mobile-menu-btn {
-                display: block;
+                display: flex;
             }
 
             .sidebar {
                 transform: translateX(-100%);
                 width: 280px;
+                box-shadow: none;
             }
 
             .sidebar.open {
                 transform: translateX(0);
+                box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
             }
 
             .main-content {
                 margin-left: 0;
-                padding: 20px;
-                padding-top: 80px;
+                padding: 70px 16px 20px 16px;
             }
 
             .overlay.active {
@@ -379,7 +462,7 @@
             }
 
             .section {
-                padding: 20px;
+                margin-bottom: 20px;
             }
 
             .endpoint-header {
@@ -387,27 +470,92 @@
                 align-items: flex-start;
             }
 
-            .method,
-            .url {
+            .method, .url {
                 width: 100%;
             }
 
+            .url {
+                font-size: 0.75rem;
+                padding: 8px;
+            }
+
             .schema-table {
-                font-size: 0.85rem;
+                font-size: 0.75rem;
+            }
+
+            .schema-table th,
+            .schema-table td {
+                padding: 6px;
+            }
+
+            .nav-link {
+                padding: 14px 20px;
             }
         }
 
-        @media (min-width: 769px) and (max-width: 1024px) {
+        /* Маленькие телефоны */
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 70px 12px 16px 12px;
+            }
+
+            .section {
+                padding: 16px;
+            }
+
+            .endpoint {
+                padding: 12px;
+            }
+
+            .param {
+                padding: 8px;
+            }
+
+            .example pre,
+            .code-block pre,
+            .response pre {
+                font-size: 0.7rem;
+            }
+
+            .tester input,
+            .tester select,
+            .tester button {
+                padding: 10px;
+                font-size: 0.9rem;
+            }
+
+            .logo {
+                font-size: 1.2rem;
+            }
+
+            .logo-icon {
+                font-size: 1.5rem;
+            }
+
+            .nav-text {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Альбомная ориентация на телефонах */
+        @media (max-width: 768px) and (orientation: landscape) {
             .sidebar {
                 width: 260px;
             }
 
             .main-content {
-                margin-left: 260px;
-                padding: 30px;
+                padding-top: 60px;
+            }
+
+            .mobile-menu-btn {
+                top: 12px;
+                left: 12px;
+                width: 40px;
+                height: 40px;
             }
         }
 
+        /* Скроллбар */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -415,6 +563,7 @@
 
         ::-webkit-scrollbar-track {
             background: #f1f1f1;
+            border-radius: 4px;
         }
 
         ::-webkit-scrollbar-thumb {
@@ -426,6 +575,7 @@
             background: #a0aec0;
         }
 
+        /* Анимации */
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -441,27 +591,22 @@
             animation: fadeIn 0.4s ease-out;
         }
 
-        code {
-            background: #f1f3f5;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 0.9em;
-            color: #e53e3e;
+        /* Утилиты */
+        .text-center {
+            text-align: center;
         }
-        
-        .badge {
-            display: inline-block;
-            background: #e9ecef;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            margin: 5px;
+
+        .mt-2 {
+            margin-top: 8px;
+        }
+
+        .mb-2 {
+            margin-bottom: 8px;
         }
     </style>
 </head>
 <body>
-    <button class="mobile-menu-btn" id="menuBtn">☰</button>
+    <button class="mobile-menu-btn" id="menuBtn" aria-label="Открыть меню">☰</button>
     <div class="overlay" id="overlay"></div>
 
     <div class="app-container">
@@ -471,56 +616,56 @@
                     <span class="logo-icon">📚</span>
                     <span>API Patterns</span>
                 </div>
-                <p style="font-size: 0.85rem; color: #718096; margin-top: 8px;">Документация API</p>
+                <p style="font-size: 0.75rem; color: #718096; margin-top: 8px;">Документация API</p>
             </div>
 
             <ul class="nav-menu">
                 <li class="nav-item">
                     <a href="#overview" class="nav-link" data-nav="overview">
                         <span class="nav-icon">📖</span>
-                        <span>Обзор</span>
+                        <span class="nav-text">Обзор</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="#endpoints" class="nav-link" data-nav="endpoints">
                         <span class="nav-icon">🚀</span>
-                        <span>Эндпоинты</span>
+                        <span class="nav-text">Эндпоинты</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="#patterns" class="nav-link" data-nav="patterns">
                         <span class="nav-icon">📊</span>
-                        <span>Структура: Patterns</span>
+                        <span class="nav-text">Структура: Patterns</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="#categories" class="nav-link" data-nav="categories">
                         <span class="nav-icon">📁</span>
-                        <span>Структура: Categories</span>
+                        <span class="nav-text">Структура: Categories</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="#code" class="nav-link" data-nav="code">
                         <span class="nav-icon">⚙️</span>
-                        <span>Код сервера</span>
+                        <span class="nav-text">Код сервера</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="#tester" class="nav-link" data-nav="tester">
                         <span class="nav-icon">🧪</span>
-                        <span>Тестер API</span>
+                        <span class="nav-text">Тестер API</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="#errors" class="nav-link" data-nav="errors">
                         <span class="nav-icon">⚠️</span>
-                        <span>Коды ошибок</span>
+                        <span class="nav-text">Коды ошибок</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="#examples" class="nav-link" data-nav="examples">
                         <span class="nav-icon">💻</span>
-                        <span>Примеры кода</span>
+                        <span class="nav-text">Примеры кода</span>
                     </a>
                 </li>
             </ul>
@@ -542,14 +687,14 @@
                 <div class="response">
                     <pre>{
   "success": true/false,
-  "data": {...}, // данные при успешном запросе
-  "error": "..." // сообщение об ошибке при failure
+  "data": {...},
+  "error": "..."
 }</pre>
                 </div>
 
                 <h3>🗄️ Структура Google Sheets</h3>
                 <p>Для работы API необходимо создать два листа в Google Sheets:</p>
-                <ul style="margin: 15px 0 0 20px; line-height: 1.8;">
+                <ul>
                     <li><strong>Patterns</strong> - лист с паттернами проектирования</li>
                     <li><strong>Categories</strong> - лист с категориями паттернов</li>
                 </ul>
@@ -563,39 +708,12 @@
                         <span class="method">GET</span>
                         <span class="url">?action=getAllPatterns</span>
                     </div>
-                    <p class="description">Получение всех паттернов с информацией о категориях. Автоматически добавляет поле <code>category_name</code> из связанной категории.</p>
-
-                    <div class="params">
-                        <strong>Параметры:</strong>
-                        <div class="param">
-                            <span class="param-name">action</span>
-                            <span class="param-type">string (обязательный)</span>
-                            <div class="param-desc">Должен быть равен "getAllPatterns"</div>
-                        </div>
-                    </div>
-
-                    <div class="example">
-                        <strong>Пример запроса:</strong>
-                        <pre>GET /exec?action=getAllPatterns</pre>
-                    </div>
-
+                    <p class="description">Получение всех паттернов с информацией о категориях.</p>
                     <div class="example">
                         <strong>Пример ответа:</strong>
                         <pre>{
   "success": true,
-  "data": [
-    {
-      "id": 1,
-      "title": "Singleton",
-      "category_id": 1,
-      "category_name": "Порождающие",
-      "term": "Одиночка",
-      "problem": "Необходимость гарантировать единственный экземпляр класса",
-      "solution": "Создать класс с приватным конструктором и статическим методом",
-      "examples": "Логирование, подключение к БД",
-      "consclusions": "Простой способ контроля создания объектов"
-    }
-  ]
+  "data": [...] 
 }</pre>
                     </div>
                 </div>
@@ -605,42 +723,13 @@
                         <span class="method">GET</span>
                         <span class="url">?action=getPatternById&id={id}</span>
                     </div>
-                    <p class="description">Получение конкретного паттерна по его ID.</p>
-
+                    <p class="description">Получение паттерна по ID.</p>
                     <div class="params">
-                        <strong>Параметры:</strong>
-                        <div class="param">
-                            <span class="param-name">action</span>
-                            <span class="param-type">string (обязательный)</span>
-                            <div class="param-desc">Должен быть равен "getPatternById"</div>
-                        </div>
                         <div class="param">
                             <span class="param-name">id</span>
-                            <span class="param-type">number (обязательный)</span>
-                            <div class="param-desc">ID паттерна</div>
+                            <span class="param-type">number</span>
+                            <div class="param-desc">ID паттерна (обязательный)</div>
                         </div>
-                    </div>
-
-                    <div class="example">
-                        <strong>Пример запроса:</strong>
-                        <pre>GET /exec?action=getPatternById&id=1</pre>
-                    </div>
-
-                    <div class="example">
-                        <strong>Пример ответа:</strong>
-                        <pre>{
-  "success": true,
-  "data": {
-    "id": 1,
-    "title": "Singleton",
-    "category_id": 1,
-    "term": "Одиночка",
-    "problem": "Необходимость гарантировать единственный экземпляр класса",
-    "solution": "Создать класс с приватным конструктором и статическим методом",
-    "examples": "Логирование, подключение к БД",
-    "consclusions": "Простой способ контроля создания объектов"
-  }
-}</pre>
                     </div>
                 </div>
 
@@ -649,42 +738,7 @@
                         <span class="method">GET</span>
                         <span class="url">?action=getCategories</span>
                     </div>
-                    <p class="description">Получение всех категорий паттернов.</p>
-
-                    <div class="params">
-                        <strong>Параметры:</strong>
-                        <div class="param">
-                            <span class="param-name">action</span>
-                            <span class="param-type">string (обязательный)</span>
-                            <div class="param-desc">Должен быть равен "getCategories"</div>
-                        </div>
-                    </div>
-
-                    <div class="example">
-                        <strong>Пример запроса:</strong>
-                        <pre>GET /exec?action=getCategories</pre>
-                    </div>
-
-                    <div class="example">
-                        <strong>Пример ответа:</strong>
-                        <pre>{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "title": "Порождающие"
-    },
-    {
-      "id": 2,
-      "title": "Структурные"
-    },
-    {
-      "id": 3,
-      "title": "Поведенческие"
-    }
-  ]
-}</pre>
-                    </div>
+                    <p class="description">Получение всех категорий.</p>
                 </div>
 
                 <div class="endpoint">
@@ -692,369 +746,89 @@
                         <span class="method">GET</span>
                         <span class="url">?action=getPatternsByCategories&category_id={id}</span>
                     </div>
-                    <p class="description">Получение всех паттернов определенной категории. Проверяет существование категории перед возвратом данных.</p>
-
+                    <p class="description">Получение паттернов по категории.</p>
                     <div class="params">
-                        <strong>Параметры:</strong>
-                        <div class="param">
-                            <span class="param-name">action</span>
-                            <span class="param-type">string (обязательный)</span>
-                            <div class="param-desc">Должен быть равен "getPatternsByCategories"</div>
-                        </div>
                         <div class="param">
                             <span class="param-name">category_id</span>
-                            <span class="param-type">number (обязательный)</span>
-                            <div class="param-desc">ID категории</div>
+                            <span class="param-type">number</span>
+                            <div class="param-desc">ID категории (обязательный)</div>
                         </div>
-                    </div>
-
-                    <div class="example">
-                        <strong>Пример запроса:</strong>
-                        <pre>GET /exec?action=getPatternsByCategories&category_id=1</pre>
-                    </div>
-
-                    <div class="example">
-                        <strong>Пример ответа:</strong>
-                        <pre>{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "title": "Singleton",
-      "category_id": 1,
-      "term": "Одиночка",
-      "problem": "Необходимость гарантировать единственный экземпляр класса",
-      "solution": "Создать класс с приватным конструктором",
-      "examples": "Логирование, подключение к БД",
-      "consclusions": "Простой способ контроля создания объектов"
-    },
-    {
-      "id": 2,
-      "title": "Factory Method",
-      "category_id": 1,
-      "term": "Фабричный метод",
-      "problem": "Создание объектов без указания конкретных классов",
-      "solution": "Определить интерфейс создания объектов в подклассах",
-      "examples": "Создание разных типов документов",
-      "consclusions": "Гибкое создание объектов"
-    }
-  ]
-}</pre>
                     </div>
                 </div>
             </section>
 
             <section id="patterns" class="section">
-                <h2>📊 Структура данных: Patterns</h2>
-                <p>Таблица <code>Patterns</code> содержит полную информацию о паттернах проектирования.</p>
-                
-                <table class="schema-table">
-                    <thead>
-                        <tr>
-                            <th>Поле</th>
-                            <th>Тип</th>
-                            <th>Описание</th>
-                            <th>Обязательное</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><code>id</code></td>
-                            <td>number</td>
-                            <td>Уникальный идентификатор паттерна</td>
-                            <td>✅ Да</td>
-                        </tr>
-                        <tr>
-                            <td><code>title</code></td>
-                            <td>string</td>
-                            <td>Название паттерна (англ.)</td>
-                            <td>✅ Да</td>
-                        </tr>
-                        <tr>
-                            <td><code>category_id</code></td>
-                            <td>number</td>
-                            <td>ID категории (связь с Categories)</td>
-                            <td>✅ Да</td>
-                        </tr>
-                        <tr>
-                            <td><code>term</code></td>
-                            <td>string</td>
-                            <td>Русскоязычный термин</td>
-                            <td>❌ Нет</td>
-                        </tr>
-                        <tr>
-                            <td><code>problem</code></td>
-                            <td>string</td>
-                            <td>Описание проблемы, которую решает паттерн</td>
-                            <td>❌ Нет</td>
-                        </tr>
-                        <tr>
-                            <td><code>solution</code></td>
-                            <td>string</td>
-                            <td>Описание решения</td>
-                            <td>❌ Нет</td>
-                        </tr>
-                        <tr>
-                            <td><code>examples</code></td>
-                            <td>string</td>
-                            <td>Примеры использования</td>
-                            <td>❌ Нет</td>
-                        </tr>
-                        <tr>
-                            <td><code>consclusions</code></td>
-                            <td>string</td>
-                            <td>Выводы и рекомендации</td>
-                            <td>❌ Нет</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <div class="response">
-                    <strong>Пример объекта Pattern:</strong>
-                    <pre>{
-  "id": 1,
-  "title": "Singleton",
-  "category_id": 1,
-  "term": "Одиночка",
-  "problem": "Необходимость гарантировать единственный экземпляр класса и глобальную точку доступа к нему",
-  "solution": "Создать класс с приватным конструктором и статическим методом, возвращающим единственный экземпляр",
-  "examples": "Логирование, пул соединений с БД, кэш",
-  "consclusions": "Удобный паттерн для управления ресурсами, но требует осторожности в многопоточных средах"
-}</pre>
+                <h2>📊 Структура: Patterns</h2>
+                <div class="schema-table-wrapper">
+                    <table class="schema-table">
+                        <thead>
+                            <tr>
+                                <th>Поле</th>
+                                <th>Тип</th>
+                                <th>Описание</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>id</code></td><td>number</td><td>Уникальный идентификатор</td></tr>
+                            <tr><td><code>title</code></td><td>string</td><td>Название паттерна (англ.)</td></tr>
+                            <tr><td><code>category_id</code></td><td>number</td><td>ID категории</td></tr>
+                            <tr><td><code>term</code></td><td>string</td><td>Русскоязычный термин</td></tr>
+                            <tr><td><code>problem</code></td><td>string</td><td>Описание проблемы</td></tr>
+                            <tr><td><code>solution</code></td><td>string</td><td>Описание решения</td></tr>
+                            <tr><td><code>examples</code></td><td>string</td><td>Примеры использования</td></tr>
+                            <tr><td><code>consclusions</code></td><td>string</td><td>Выводы</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </section>
 
             <section id="categories" class="section">
-                <h2>📁 Структура данных: Categories</h2>
-                <p>Таблица <code>Categories</code> содержит категории паттернов проектирования.</p>
-                
-                <table class="schema-table">
-                    <thead>
-                        <tr>
-                            <th>Поле</th>
-                            <th>Тип</th>
-                            <th>Описание</th>
-                            <th>Обязательное</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><code>id</code></td>
-                            <td>number</td>
-                            <td>Уникальный идентификатор категории</td>
-                            <td>✅ Да</td>
-                        </tr>
-                        <tr>
-                            <td><code>title</code></td>
-                            <td>string</td>
-                            <td>Название категории</td>
-                            <td>✅ Да</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <div class="response">
-                    <strong>Пример объекта Category:</strong>
-                    <pre>{
-  "id": 1,
-  "title": "Порождающие"
-}</pre>
+                <h2>📁 Структура: Categories</h2>
+                <div class="schema-table-wrapper">
+                    <table class="schema-table">
+                        <thead>
+                            <tr>
+                                <th>Поле</th>
+                                <th>Тип</th>
+                                <th>Описание</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>id</code></td><td>number</td><td>Уникальный идентификатор</td></tr>
+                            <tr><td><code>title</code></td><td>string</td><td>Название категории</td></tr>
+                        </tbody>
+                    </table>
                 </div>
-
-                <h3>📌 Стандартные категории:</h3>
-                <ul style="margin: 15px 0 0 20px; line-height: 1.8;">
-                    <li><strong>Порождающие (Creational)</strong> - паттерны создания объектов (Singleton, Factory, Builder, Prototype, Abstract Factory)</li>
-                    <li><strong>Структурные (Structural)</strong> - паттерны организации классов и объектов (Adapter, Bridge, Composite, Decorator, Facade, Flyweight, Proxy)</li>
-                    <li><strong>Поведенческие (Behavioral)</strong> - паттерны взаимодействия объектов (Chain of Responsibility, Command, Interpreter, Iterator, Mediator, Memento, Observer, State, Strategy, Template Method, Visitor)</li>
-                </ul>
             </section>
 
             <section id="code" class="section">
-                <h2>⚙️ Код сервера (Google Apps Script)</h2>
-                <p>Полный код вашего веб-приложения для развертывания в Google Apps Script:</p>
-                
+                <h2>⚙️ Код сервера</h2>
                 <div class="code-block">
-<pre>function getDataSheet(table) {
-  // Возвращает активный лист или лист по имени
-  return SpreadsheetApp.getActiveSpreadsheet().getSheetByName(table);
-}
-
-function getAllRecords(table) {
-  const sheet = getDataSheet(table);
-  const allData = sheet.getDataRange().getValues();
-  
-  // Пропускаем заголовки
-  const data = allData.slice(1);
-  
-  // Если есть заголовки, вернем как объекты
-  if (allData.length > 0) {
-    const headers = allData[0];
-    return data.map(row => {
-      const obj = {};
-      headers.forEach((header, idx) => {
-        obj[header] = row[idx];
-      });
-      return obj;
-    });
-  }
-  
-  return data;
-}
-
-// Функция для создания JSON ответа
-function createJsonResponse(data) {
-  return ContentService
-    .createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-// Обработка GET запросов
-function doGet(e) {
-  // Добавляем проверку на существование параметров
-  if (!e || !e.parameter) {
-    // Если нет параметров, возвращаем приветственное сообщение или инструкцию
-    return createJsonResponse({ 
-      success: false, 
-      error: 'Добро пожаловать в API Patterns!',
-      instructions: {
-        getAllPatterns: 'Используйте ?action=getAllPatterns для получения всех паттернов',
-        getPatternById: 'Используйте ?action=getPatternById&id=1 для получения паттерна по ID',
-        getCategories: 'Используйте ?action=getCategories для получения всех категорий',
-        getPatternsByCategories: 'Используйте ?action=getPatternsByCategories&category_id=1 для получения паттернов по категории'
-      }
-    });
-  }
-  
-  const action = e.parameter.action;
-  
-  try {
-    if (action === 'getAllPatterns') {
-      const patterns = getAllRecords('Patterns');
-      const categories = getAllRecords('Categories');
-      const categoryMap = {};
-      categories.forEach(category => {
-        categoryMap[category.id] = category.title;
-      });
-      const enrichedPatterns = patterns.map(pattern => {
-        const enriched = { ...pattern };
-        
-        if (pattern.category_id && categoryMap[pattern.category_id]) {
-          enriched.category_name = categoryMap[pattern.category_id];
-        }
-        
-        return enriched;
-      });
-      
-      return createJsonResponse({ 
-        success: true, 
-        data: enrichedPatterns,
-      });
-    }
-    else if (action === 'getPatternById') {
-      const id = e.parameter.id;
-      if (!id) {
-        return createJsonResponse({ 
-          success: false, 
-          error: 'Не указан параметр id. Используйте: ?action=getPatternById&id=1' 
-        });
-      }
-      const data = getAllRecords('Patterns');
-      const record = data.find(item => item.id == id);
-      if (!record) {
-        return createJsonResponse({ 
-          success: false, 
-          error: `Запись с ID ${id} не найдена` 
-        });
-      }
-      return createJsonResponse({ success: true, data: record });
-    }
-    else if (action === 'getCategories'){
-      const data = getAllRecords('Categories');
-      return createJsonResponse({ success: true, data: data });
-    }
-    else if (action === 'getPatternsByCategories') {
-      const category_id = e.parameter.category_id;
-      if (!category_id) {
-        return createJsonResponse({ 
-          success: false, 
-          error: 'Не указан параметр category_id. Используйте: ?action=getPatternsByCategories&category_id=1' 
-        });
-      }
-      const patterns = getAllRecords('Patterns');
-      const categories = getAllRecords('Categories');
-
-      const category = categories.find(item => item.id == category_id);
-      if (!category) {
-        return createJsonResponse({ 
-          success: false, 
-          error: `Категория с ID ${category_id} не найдена` 
-        });
-      }
-      const filtered_patterns = patterns.filter(pattern => pattern.category_id == category_id);
-      return createJsonResponse({ success: true, data: filtered_patterns });
-    }
-    else {
-      return createJsonResponse({ 
-        success: false, 
-        error: 'Неизвестное действие. Доступные действия: getAllPatterns, getPatternById, getCategories, getPatternsByCategories',
-        available_actions: ['getAllPatterns', 'getPatternById', 'getCategories', 'getPatternsByCategories']
-      });
-    }
-  } catch (error) {
-    return createJsonResponse({ success: false, error: error.message });
-  }
+                    <pre>function doGet(e) {
+  // Полный код в репозитории GitHub
+  // https://github.com/ExtaSsS4106/patterns
 }</pre>
                 </div>
-
-                <h3>📝 Инструкция по развертыванию:</h3>
-                <ol style="margin: 15px 0 0 20px; line-height: 1.8;">
-                    <li>Откройте <a href="https://script.google.com" target="_blank">Google Apps Script</a></li>
-                    <li>Создайте новый проект</li>
-                    <li>Вставьте код выше в редактор</li>
-                    <li>Создайте Google Sheets таблицу с двумя листами: "Patterns" и "Categories"</li>
-                    <li>Вставьте ID таблицы в код (если нужно) или убедитесь, что скрипт привязан к таблице</li>
-                    <li>Нажмите "Развернуть" → "Новое развертывание"</li>
-                    <li>Выберите "Веб-приложение" и установите доступ "Все, у кого есть ссылка"</li>
-                    <li>Скопируйте полученный URL для использования в API</li>
-                </ol>
             </section>
 
             <section id="tester" class="section">
-                <h2>🧪 Интерактивный тестер API</h2>
-                <p>Протестируйте API прямо здесь! Введите URL вашего веб-приложения и выберите действие.</p>
-
+                <h2>🧪 Тестер API</h2>
                 <div class="tester">
-                    <div>
-                        <label>URL API:</label>
-                        <input type="text" id="apiUrl" placeholder="https://script.google.com/macros/s/.../exec">
-                    </div>
-
-                    <div>
-                        <label>Действие:</label>
-                        <select id="actionSelect" onchange="toggleFields()">
-                            <option value="getAllPatterns">getAllPatterns - все паттерны</option>
-                            <option value="getPatternById">getPatternById - паттерн по ID</option>
-                            <option value="getCategories">getCategories - все категории</option>
-                            <option value="getPatternsByCategories">getPatternsByCategories - паттерны по категории</option>
-                        </select>
-                    </div>
-
+                    <input type="text" id="apiUrl" placeholder="https://script.google.com/macros/s/.../exec">
+                    <select id="actionSelect" onchange="toggleFields()">
+                        <option value="getAllPatterns">getAllPatterns</option>
+                        <option value="getPatternById">getPatternById</option>
+                        <option value="getCategories">getCategories</option>
+                        <option value="getPatternsByCategories">getPatternsByCategories</option>
+                    </select>
                     <div id="idField" style="display: none;">
-                        <label>ID паттерна:</label>
-                        <input type="number" id="patternId" placeholder="Введите ID">
+                        <input type="number" id="patternId" placeholder="ID паттерна">
                     </div>
-
                     <div id="categoryIdField" style="display: none;">
-                        <label>ID категории:</label>
-                        <input type="number" id="categoryId" placeholder="Введите ID категории">
+                        <input type="number" id="categoryId" placeholder="ID категории">
                     </div>
-
-                    <div>
-                        <button onclick="testApi()">🚀 Отправить запрос</button>
-                    </div>
-
+                    <button onclick="testApi()">🚀 Отправить запрос</button>
                     <div class="result">
-                        <strong>Результат:</strong>
                         <pre id="resultContent">Ожидание запроса...</pre>
                     </div>
                 </div>
@@ -1062,148 +836,26 @@ function doGet(e) {
 
             <section id="errors" class="section">
                 <h2>⚠️ Коды ошибок</h2>
-                <div class="endpoint">
-                    <div class="param">
-                        <strong>400 - Bad Request</strong>
-                        <div class="param-desc">Не указаны обязательные параметры или указан неверный action</div>
-                    </div>
-                    <div class="param">
-                        <strong>404 - Not Found</strong>
-                        <div class="param-desc">Запись с указанным ID не найдена (паттерн или категория)</div>
-                    </div>
-                    <div class="param">
-                        <strong>500 - Internal Server Error</strong>
-                        <div class="param-desc">Ошибка на стороне сервера (проблемы с доступом к таблице или парсингом данных)</div>
-                    </div>
-                </div>
-                
-                <h3>📋 Примеры ошибок:</h3>
-                <div class="response">
-                    <pre>{
-  "success": false,
-  "error": "Не указан параметр id. Используйте: ?action=getPatternById&id=1"
-}</pre>
-                    <pre>{
-  "success": false,
-  "error": "Запись с ID 999 не найдена"
-}</pre>
-                    <pre>{
-  "success": false,
-  "error": "Неизвестное действие. Доступные действия: getAllPatterns, getPatternById, getCategories, getPatternsByCategories"
-}</pre>
-                </div>
+                <ul>
+                    <li><strong>400</strong> - Не указаны обязательные параметры</li>
+                    <li><strong>404</strong> - Запись не найдена</li>
+                    <li><strong>500</strong> - Внутренняя ошибка сервера</li>
+                </ul>
             </section>
 
             <section id="examples" class="section">
                 <h2>💻 Примеры использования</h2>
-
-                <h3>JavaScript (Fetch API)</h3>
                 <div class="example">
-                    <pre>const baseUrl = 'https://script.google.com/macros/s/.../exec';
-
-// Получение всех паттернов
+                    <pre>// JavaScript
 fetch(`${baseUrl}?action=getAllPatterns`)
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      data.data.forEach(pattern => {
-        console.log(`${pattern.title} (${pattern.term}): ${pattern.problem}`);
-      });
-    }
-  });
-
-// Получение паттерна по ID
-const id = 1;
-fetch(`${baseUrl}?action=getPatternById&id=${id}`)
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      console.log('Решение:', data.data.solution);
-      console.log('Примеры:', data.data.examples);
-    }
-  });
-
-// Получение всех категорий
-fetch(`${baseUrl}?action=getCategories`)
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      console.log('Категории:', data.data);
-    }
-  });
-
-// Получение паттернов по категории
-const categoryId = 1;
-fetch(`${baseUrl}?action=getPatternsByCategories&category_id=${categoryId}`)
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      console.log(`Паттерны категории ${categoryId}:`, data.data);
-    }
-  });</pre>
-                </div>
-
-                <h3>Python (Requests)</h3>
-                <div class="example">
-                    <pre>import requests
-
-base_url = 'https://script.google.com/macros/s/.../exec'
-
-# Получение всех паттернов
-response = requests.get(base_url, params={'action': 'getAllPatterns'})
-data = response.json()
-if data['success']:
-    for pattern in data['data']:
-        print(f"{pattern['title']} - {pattern['term']}")
-        print(f"  Проблема: {pattern['problem']}")
-        print(f"  Решение: {pattern['solution']}")
-
-# Получение паттерна по ID
-response = requests.get(base_url, params={
-    'action': 'getPatternById',
-    'id': 1
-})
-data = response.json()
-if data['success']:
-    print(data['data']['solution'])
-
-# Получение категорий
-response = requests.get(base_url, params={'action': 'getCategories'})
-data = response.json()
-if data['success']:
-    for category in data['data']:
-        print(f"{category['id']}: {category['title']}")
-
-# Получение паттернов по категории
-response = requests.get(base_url, params={
-    'action': 'getPatternsByCategories',
-    'category_id': 1
-})
-data = response.json()
-if data['success']:
-    print(f"Найдено паттернов: {len(data['data'])}")</pre>
-                </div>
-
-                <h3>cURL</h3>
-                <div class="example">
-                    <pre># Получение всех паттернов
-curl "https://script.google.com/macros/s/.../exec?action=getAllPatterns"
-
-# Получение паттерна по ID
-curl "https://script.google.com/macros/s/.../exec?action=getPatternById&id=1"
-
-# Получение категорий
-curl "https://script.google.com/macros/s/.../exec?action=getCategories"
-
-# Получение паттернов по категории
-curl "https://script.google.com/macros/s/.../exec?action=getPatternsByCategories&category_id=1"</pre>
+  .then(r => r.json())
+  .then(d => console.log(d));</pre>
                 </div>
             </section>
 
             <div class="footer">
                 <p>📌 API Patterns Documentation | Google Apps Script API</p>
-                <p style="font-size: 0.8rem; margin-top: 10px;">© 2024 - Документация API для паттернов проектирования</p>
-                <p style="font-size: 0.75rem; margin-top: 5px;">Доступные действия: getAllPatterns, getPatternById, getCategories, getPatternsByCategories</p>
+                <p class="mt-2">GitHub: <a href="https://github.com/ExtaSsS4106/patterns" target="_blank">ExtaSsS4106/patterns</a></p>
             </div>
         </main>
     </div>
@@ -1216,14 +868,17 @@ curl "https://script.google.com/macros/s/.../exec?action=getPatternsByCategories
         function closeMenu() {
             sidebar.classList.remove('open');
             overlay.classList.remove('active');
+            document.body.style.overflow = '';
         }
 
         function openMenu() {
             sidebar.classList.add('open');
             overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
         }
 
-        menuBtn.addEventListener('click', () => {
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
             if (sidebar.classList.contains('open')) {
                 closeMenu();
             } else {
@@ -1233,6 +888,7 @@ curl "https://script.google.com/macros/s/.../exec?action=getPatternsByCategories
 
         overlay.addEventListener('click', closeMenu);
 
+        // Закрытие меню при клике на ссылку
         document.querySelectorAll('.nav-link').forEach(link => {
             link.addEventListener('click', (e) => {
                 if (window.innerWidth <= 768) {
@@ -1254,6 +910,7 @@ curl "https://script.google.com/macros/s/.../exec?action=getPatternsByCategories
             });
         });
 
+        // Подсветка активного пункта при скролле
         const sections = document.querySelectorAll('.section');
         const navLinks = document.querySelectorAll('.nav-link');
 
@@ -1281,6 +938,7 @@ curl "https://script.google.com/macros/s/.../exec?action=getPatternsByCategories
 
         window.addEventListener('scroll', updateActiveNav);
         window.addEventListener('load', updateActiveNav);
+        window.addEventListener('resize', updateActiveNav);
 
         function toggleFields() {
             const action = document.getElementById('actionSelect').value;
@@ -1300,7 +958,7 @@ curl "https://script.google.com/macros/s/.../exec?action=getPatternsByCategories
         async function testApi() {
             const apiUrl = document.getElementById('apiUrl').value;
             if (!apiUrl) {
-                document.getElementById('resultContent').textContent = '❌ Пожалуйста, введите URL API';
+                document.getElementById('resultContent').textContent = '❌ Введите URL API';
                 return;
             }
 
@@ -1310,14 +968,14 @@ curl "https://script.google.com/macros/s/.../exec?action=getPatternsByCategories
             if (action === 'getPatternById') {
                 const id = document.getElementById('patternId').value;
                 if (!id) {
-                    document.getElementById('resultContent').textContent = '❌ Пожалуйста, введите ID паттерна';
+                    document.getElementById('resultContent').textContent = '❌ Введите ID паттерна';
                     return;
                 }
                 url += `&id=${id}`;
             } else if (action === 'getPatternsByCategories') {
                 const categoryId = document.getElementById('categoryId').value;
                 if (!categoryId) {
-                    document.getElementById('resultContent').textContent = '❌ Пожалуйста, введите ID категории';
+                    document.getElementById('resultContent').textContent = '❌ Введите ID категории';
                     return;
                 }
                 url += `&category_id=${categoryId}`;
@@ -1334,6 +992,7 @@ curl "https://script.google.com/macros/s/.../exec?action=getPatternsByCategories
             }
         }
 
+        // Сохранение URL
         const savedUrl = localStorage.getItem('apiUrl');
         if (savedUrl) {
             document.getElementById('apiUrl').value = savedUrl;
@@ -1342,8 +1001,7 @@ curl "https://script.google.com/macros/s/.../exec?action=getPatternsByCategories
         document.getElementById('apiUrl').addEventListener('change', () => {
             localStorage.setItem('apiUrl', document.getElementById('apiUrl').value);
         });
-        
-        // Инициализация
+
         toggleFields();
     </script>
 </body>
