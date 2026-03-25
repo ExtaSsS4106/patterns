@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Мой профиль</title>
+</head>
+<body>
+    {% if user.is_authenticated %}
+        <h1>Привет, {{ user.username }}!</h1>
+        <p>Email: {{ user.email }}</p>
+        <p>Вы авторизованы</p>
+        <a href="{% url 'logout' %}">Выйти</a>
+    {% else %}
+        <h1>Вы не авторизованы</h1>
+        <a href="{% url 'login' %}">Войти</a>
+        <a href="{% url 'sign_up' %}">Зарегистрироваться</a>
+    {% endif %}
+</body>
+</html>

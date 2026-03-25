@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Каталог паттернов</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .filters {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+        
+        .patterns-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .pattern-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            transition: all 0.2s;
+        }
+        
+        .pattern-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .pattern-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #5a67d8;
+            margin-bottom: 0.5rem;
+        }
+        
+        .pattern-term {
+            color: #718096;
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .pattern-description {
+            color: #4a5568;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+        
+        .search-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .search-bar input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+        
+        .pagination button {
+            padding: 0.5rem 1rem;
+            border: 1px solid #e0e0e0;
+            background: white;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+        
+        .pagination button.active {
+            background: #5a67d8;
+            color: white;
+            border-color: #5a67d8;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #718096;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">📚 Patterns Hub</a>
+            <div class="nav-links">
+                <a href="catalog.html">Каталог</a>
+                <a href="#" id="favoritesLink">Избранное</a>
+                <a href="account.html">Аккаунт</a>
+                <a href="editor.html" id="editorLink" style="display: none;">Редактор</a>
+                <a href="#" id="loginBtn" class="btn btn-outline">Войти</a>
+                <a href="#" id="logoutBtn" style="display: none;" class="btn btn-outline">Выйти</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <h1>📚 Каталог паттернов</h1>
+        
+        <div class="filters">
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Поиск по названию или описанию...">
+                <button class="btn btn-primary" onclick="searchPatterns()">🔍 Найти</button>
+            </div>
+            
+            <div class="flex">
+                <select id="categoryFilter" onchange="loadPatterns()">
+                    <option value="">Все категории</option>
+                </select>
+                
+                <select id="sortBy" onchange="loadPatterns()">
+                    <option value="-created_at">Новые</option>
+                    <option value="-avg_rating">По рейтингу</option>
+                    <option value="title">По названию</option>
+                    <option value="-views_count">По просмотрам</option>
+                </select>
+                
+                <select id="tagsFilter" multiple size="3" style="min-width: 200px;">
+                    <option value="">Выберите теги (Ctrl+клик)</option>
+                </select>
+            </div>
+        </div>
+        
+        <div id="patternsContainer" class="patterns-grid">
+            <div class="loading">Загрузка...</div>
+        </div>
+        
+        <div class="pagination" id="pagination"></div>
+    </main>
+
+    <script>
+        const API_URL = 'http://localhost:8000/api';
+        let currentPage = 1;
+        let totalPages = 1;
+        let filters = {
+            search: '',
+            category: '',
+            tags: [],
+            ordering: '-created_at'
+        };
+
+        async function fetchAPI(endpoint) {
+            const token = localStorage.getItem('token');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Token ${token}`;
+            const response = await fetch(`${API_URL}${endpoint}`, { headers });
+            return response.json();
+        }
+
+        async function loadCategories() {
+            try {
+                const categories = await fetchAPI('/categories/');
+                const select = document.getElementById('categoryFilter');
+                select.innerHTML = '<option value="">Все категории</option>' + 
+                    categories.map(cat => `<option value="${cat.id}">${cat.title}</option>`).join('');
+            } catch (error) {
+                console.error('Ошибка загрузки категорий:', error);
+            }
+        }
+
+        async function loadTags() {
+            try {
+                const tags = await fetchAPI('/tags/');
+                const select = document.getElementById('tagsFilter');
+                select.innerHTML = tags.map(tag => `<option value="${tag.id}">${tag.name}</option>`).join('');
+            } catch (error) {
+                console.error('Ошибка загрузки тегов:', error);
+            }
+        }
+
+        async function loadPatterns() {
+            const container = document.getElementById('patternsContainer');
+            container.innerHTML = '<div class="loading">⏳ Загрузка...</div>';
+            
+            filters.category = document.getElementById('categoryFilter').value;
+            filters.ordering = document.getElementById('sortBy').value;
+            
+            const tagsSelect = document.getElementById('tagsFilter');
+            filters.tags = Array.from(tagsSelect.selectedOptions).map(opt => opt.value).filter(v => v);
+            
+            let url = `/patterns/?page=${currentPage}&ordering=${filters.ordering}`;
+            if (filters.search) url += `&search=${encodeURIComponent(filters.search)}`;
+            if (filters.category) url += `&category=${filters.category}`;
+            if (filters.tags.length) url += filters.tags.map(t => `&tags=${t}`).join('');
+            
+            try {
+                const data = await fetchAPI(url);
+                totalPages = Math.ceil(data.count / 20) || 1;
+                renderPatterns(data.results || []);
+                renderPagination();
+            } catch (error) {
+                container.innerHTML = '<div class="loading">❌ Ошибка загрузки</div>';
+                console.error(error);
+            }
+        }
+
+        function renderPatterns(patterns) {
+            const container = document.getElementById('patternsContainer');
+            if (!patterns.length) {
+                container.innerHTML = '<div class="loading">😕 Ничего не найдено</div>';
+                return;
+            }
+            
+            container.innerHTML = patterns.map(p => `
+                <a href="pattern-detail.html?id=${p.id}" class="pattern-card">
+                    <div class="pattern-title">${p.title}</div>
+                    <div class="pattern-term">${p.term || ''}</div>
+                    <div class="pattern-description">${(p.problem || '').substring(0, 120)}...</div>
+                    <div class="flex justify-between align-center">
+                        <div class="rating">${'⭐'.repeat(Math.round(p.avg_rating || 0))}</div>
+                        <div class="tags">${p.tags?.slice(0,3).map(t => `<span class="tag">${t.name}</span>`).join('')}</div>
+                    </div>
+                    <div class="mt-2"><small>👁️ ${p.views_count || 0} просмотров</small></div>
+                </a>
+            `).join('');
+        }
+
+        function renderPagination() {
+            const container = document.getElementById('pagination');
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            let html = '';
+            for (let i = 1; i <= Math.min(totalPages, 5); i++) {
+                html += `<button onclick="goToPage(${i})" class="${i === currentPage ? 'active' : ''}">${i}</button>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            loadPatterns();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function searchPatterns() {
+            filters.search = document.getElementById('searchInput').value;
+            currentPage = 1;
+            loadPatterns();
+        }
+
+        loadCategories();
+        loadTags();
+        loadPatterns();
+        
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
+            if (token && userStr) {
+                const user = JSON.parse(userStr);
+                document.getElementById('loginBtn').style.display = 'none';
+                document.getElementById('logoutBtn').style.display = 'inline-block';
+                if (user.is_staff) document.getElementById('editorLink').style.display = 'inline-block';
+            }
+        }
+        
+        checkAuth();
+    </script>
+</body>
+</html>

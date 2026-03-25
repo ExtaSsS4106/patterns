@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Паттерн - Patterns Hub</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .pattern-header {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .pattern-title {
+            font-size: 2rem;
+            color: #5a67d8;
+            margin-bottom: 0.5rem;
+        }
+        
+        .pattern-term {
+            font-size: 1.2rem;
+            color: #718096;
+            margin-bottom: 1rem;
+        }
+        
+        .pattern-meta {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            padding: 1rem 0;
+            border-top: 1px solid #e0e0e0;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 1rem;
+        }
+        
+        .section-content {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .section-content h3 {
+            color: #5a67d8;
+            margin-bottom: 1rem;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+        
+        .rating-stars {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .star-btn {
+            font-size: 1.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #cbd5e0;
+            transition: color 0.2s;
+        }
+        
+        .star-btn:hover,
+        .star-btn.active {
+            color: #f59e0b;
+        }
+        
+        .comment-form {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        
+        .comment-form textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">📚 Patterns Hub</a>
+            <div class="nav-links">
+                <a href="catalog.html">Каталог</a>
+                <a href="#" id="favoritesLink">Избранное</a>
+                <a href="account.html">Аккаунт</a>
+                <a href="editor.html" id="editorLink" style="display: none;">Редактор</a>
+                <a href="#" id="loginBtn" class="btn btn-outline">Войти</a>
+                <a href="#" id="logoutBtn" style="display: none;" class="btn btn-outline">Выйти</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div id="patternContent">
+            <div class="loading">⏳ Загрузка...</div>
+        </div>
+    </main>
+
+    <script>
+        const API_URL = 'http://localhost:8000/api';
+        let patternId = new URLSearchParams(window.location.search).get('id');
+        let currentUser = null;
+        let userRating = 0;
+
+        async function fetchAPI(endpoint, options = {}) {
+            const token = localStorage.getItem('token');
+            const headers = { 'Content-Type': 'application/json', ...options.headers };
+            if (token) headers['Authorization'] = `Token ${token}`;
+            
+            const response = await fetch(`${API_URL}${endpoint}`, {
+                ...options,
+                headers
+            });
+            return response.json();
+        }
+
+        async function loadPattern() {
+            try {
+                const pattern = await fetchAPI(`/patterns/${patternId}/`);
+                const comments = await fetchAPI(`/comments/by_pattern/?pattern_id=${patternId}`);
+                
+                if (currentUser) {
+                    const ratings = await fetchAPI('/ratings/');
+                    const userRatingObj = ratings.find(r => r.pattern === parseInt(patternId));
+                    if (userRatingObj) userRating = userRatingObj.value;
+                }
+                
+                renderPattern(pattern, comments.results || comments);
+            } catch (error) {
+                document.getElementById('patternContent').innerHTML = '<div class="loading">❌ Ошибка загрузки</div>';
+            }
+        }
+
+        function renderPattern(pattern, comments) {
+            const container = document.getElementById('patternContent');
+            container.innerHTML = `
+                <div class="pattern-header">
+                    <div class="pattern-title">${pattern.title}</div>
+                    <div class="pattern-term">${pattern.term || ''}</div>
+                    <div class="pattern-meta">
+                        <span>📁 ${pattern.category_name}</span>
+                        <span>⭐ ${pattern.avg_rating?.toFixed(1) || 0} (${pattern.rating_count} оценок)</span>
+                        <span>❤️ ${pattern.favorites_count} в избранном</span>
+                        <span>👁️ ${pattern.views_count} просмотров</span>
+                        <span>💬 ${pattern.comments_count} комментариев</span>
+                    </div>
+                    <div class="tags">${pattern.tags?.map(t => `<span class="tag">${t.name}</span>`).join('')}</div>
+                </div>
+                
+                <div class="actions">
+                    <button id="favoriteBtn" class="btn btn-outline">❤️ В избранное</button>
+                    <div class="rating-stars">
+                        ${[1,2,3,4,5].map(s => `
+                            <button class="star-btn" data-value="${s}">${s <= userRating ? '★' : '☆'}</button>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div class="section-content">
+                    <h3>🔍 Проблема</h3>
+                    <p>${pattern.problem || 'Не указано'}</p>
+                </div>
+                
+                <div class="section-content">
+                    <h3>💡 Решение</h3>
+                    <p>${pattern.solution || 'Не указано'}</p>
+                </div>
+                
+                <div class="section-content">
+                    <h3>📝 Примеры</h3>
+                    <p>${pattern.examples || 'Не указано'}</p>
+                </div>
+                
+                <div class="section-content">
+                    <h3>📌 Выводы</h3>
+                    <p>${pattern.consclusions || 'Не указано'}</p>
+                </div>
+                
+                <div class="section-content">
+                    <h3>💬 Комментарии</h3>
+                    <div id="commentsContainer">${renderComments(comments)}</div>
+                    <div id="addCommentForm" class="comment-form" style="display: none;">
+                        <textarea id="commentContent" rows="3" placeholder="Напишите комментарий..."></textarea>
+                        <button class="btn btn-primary" onclick="addComment()">Отправить</button>
+                    </div>
+                </div>
+            `;
+            
+            document.querySelectorAll('.star-btn').forEach(btn => {
+                btn.addEventListener('click', () => ratePattern(parseInt(btn.dataset.value)));
+            });
+            
+            document.getElementById('favoriteBtn')?.addEventListener('click', toggleFavorite);
+            
+            if (currentUser) {
+                document.getElementById('addCommentForm').style.display = 'block';
+            }
+        }
+
+        function renderComments(comments) {
+            if (!comments.length) return '<p>Нет комментариев. Будьте первым!</p>';
+            return comments.map(c => `
+                <div class="comment">
+                    <div class="comment-header">
+                        <strong>${c.user_name}</strong>
+                        <small>${new Date(c.created_at).toLocaleDateString('ru-RU')}</small>
+                    </div>
+                    <div class="comment-content">${c.content}</div>
+                </div>
+            `).join('');
+        }
+
+        async function ratePattern(value) {
+            if (!currentUser) {
+                alert('Войдите чтобы оценить');
+                return;
+            }
+            
+            try {
+                const existing = await fetchAPI('/ratings/');
+                const existingRating = existing.find(r => r.pattern === parseInt(patternId));
+                
+                if (existingRating) {
+                    await fetchAPI(`/ratings/${existingRating.id}/`, {
+                        method: 'PUT',
+                        body: JSON.stringify({ value })
+                    });
+                } else {
+                    await fetchAPI('/ratings/', {
+                        method: 'POST',
+                        body: JSON.stringify({ pattern: patternId, value })
+                    });
+                }
+                
+                userRating = value;
+                loadPattern();
+            } catch (error) {
+                console.error('Ошибка оценки:', error);
+            }
+        }
+
+        async function toggleFavorite() {
+            if (!currentUser) {
+                alert('Войдите чтобы добавить в избранное');
+                return;
+            }
+            
+            try {
+                const favorites = await fetchAPI('/favorites/');
+                const existing = favorites.find(f => f.pattern?.id === parseInt(patternId));
+                
+                if (existing) {
+                    await fetchAPI(`/favorites/${existing.id}/`, { method: 'DELETE' });
+                } else {
+                    await fetchAPI('/favorites/', {
+                        method: 'POST',
+                        body: JSON.stringify({ pattern: patternId })
+                    });
+                }
+                
+                loadPattern();
+            } catch (error) {
+                console.error('Ошибка:', error);
+            }
+        }
+
+        async function addComment() {
+            const content = document.getElementById('commentContent').value;
+            if (!content.trim()) return;
+            
+            try {
+                await fetchAPI('/comments/', {
+                    method: 'POST',
+                    body: JSON.stringify({ pattern: patternId, content })
+                });
+                document.getElementById('commentContent').value = '';
+                loadPattern();
+            } catch (error) {
+                console.error('Ошибка добавления комментария:', error);
+            }
+        }
+
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
+            if (token && userStr) {
+                currentUser = JSON.parse(userStr);
+                document.getElementById('loginBtn').style.display = 'none';
+                document.getElementById('logoutBtn').style.display = 'inline-block';
+                if (currentUser.is_staff) document.getElementById('editorLink').style.display = 'inline-block';
+            }
+        }
+        
+        checkAuth();
+        loadPattern();
+    </script>
+</body>
+</html>

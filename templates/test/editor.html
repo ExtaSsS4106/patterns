@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактор - Patterns Hub</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .pattern-list {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .pattern-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .pattern-row:last-child {
+            border-bottom: none;
+        }
+        
+        .pattern-row:hover {
+            background: #f8f9fa;
+        }
+        
+        .form-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+        }
+        
+        .status-archived {
+            background: #fed7d7;
+            color: #c53030;
+        }
+        
+        .status-deleted {
+            background: #e2e8f0;
+            color: #718096;
+        }
+        
+        .search-box {
+            margin-bottom: 1rem;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">📚 Patterns Hub</a>
+            <div class="nav-links">
+                <a href="catalog.html">Каталог</a>
+                <a href="account.html">Аккаунт</a>
+                <a href="editor.html" id="editorLink">Редактор</a>
+                <a href="#" id="logoutBtn" class="btn btn-outline">Выйти</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="editor-header">
+            <h1>✏️ Редактор паттернов</h1>
+            <button id="newPatternBtn" class="btn btn-primary">➕ Новый паттерн</button>
+        </div>
+        
+        <div class="search-box">
+            <input type="text" id="searchPatterns" placeholder="Поиск паттернов...">
+        </div>
+        
+        <div id="editorContent"></div>
+    </main>
+
+    <script>
+        const API_URL = 'http://localhost:8000/api';
+        let currentUser = null;
+        let editingPattern = null;
+        let categories = [];
+
+        async function fetchAPI(endpoint, options = {}) {
+            const token = localStorage.getItem('token');
+            const headers = { 'Content-Type': 'application/json', ...options.headers };
+            if (token) headers['Authorization'] = `Token ${token}`;
+            
+            const response = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
+            if (!response.ok && response.status === 403) {
+                alert('Доступ запрещен. Требуются права администратора.');
+                window.location.href = 'index.html';
+            }
+            return response.json();
+        }
+
+        async function loadCategories() {
+            try {
+                categories = await fetchAPI('/categories/');
+            } catch (error) {
+                console.error('Ошибка загрузки категорий:', error);
+            }
+        }
+
+        async function loadPatterns() {
+            try {
+                const search = document.getElementById('searchPatterns')?.value || '';
+                let url = '/patterns/?is_archived=false&is_deleted=false';
+                if (search) url += `&search=${encodeURIComponent(search)}`;
+                
+                const patterns = await fetchAPI(url);
+                renderPatternList(patterns.results || patterns);
+            } catch (error) {
+                console.error('Ошибка загрузки паттернов:', error);
+            }
+        }
+
+        function renderPatternList(patterns) {
+            const container = document.getElementById('editorContent');
+            if (!patterns.length) {
+                container.innerHTML = '<div class="card text-center">😕 Паттерны не найдены</div>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="pattern-list">
+                    ${patterns.map(p => `
+                        <div class="pattern-row">
+                            <div>
+                                <strong>${p.title}</strong><br>
+                                <small>${p.term || ''}</small>
+                                ${p.is_archived ? '<span class="status-badge status-archived">В архиве</span>' : ''}
+                                ${p.is_deleted ? '<span class="status-badge status-deleted">Удален</span>' : ''}
+                            </div>
+                            <div class="flex">
+                                <button class="btn btn-outline" onclick="editPattern(${p.id})">✏️</button>
+                                <button class="btn btn-outline" onclick="archivePattern(${p.id}, ${!p.is_archived})">
+                                    ${p.is_archived ? '📤 Восстановить' : '📦 В архив'}
+                                </button>
+                                <button class="btn btn-danger" onclick="deletePattern(${p.id})">🗑️</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderForm(pattern = null) {
+            const isEdit = !!pattern;
+            const data = pattern || {};
+            
+            document.getElementById('editorContent').innerHTML = `
+                <div class="form-card">
+                    <h2>${isEdit ? '✏️ Редактирование' : '➕ Новый паттерн'}</h2>
+                    <form id="patternForm">
+                        <div class="form-group">
+                            <label>Название (англ.) *</label>
+                            <input type="text" id="title" value="${data.title || ''}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Русский термин</label>
+                            <input type="text" id="term" value="${data.term || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Категория *</label>
+                            <select id="category_id" required>
+                                <option value="">Выберите категорию</option>
+                                ${categories.map(c => `
+                                    <option value="${c.id}" ${data.category == c.id ? 'selected' : ''}>${c.title}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Проблема</label>
+                            <textarea id="problem" rows="4">${data.problem || ''}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Решение</label>
+                            <textarea id="solution" rows="6">${data.solution || ''}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Примеры</label>
+                            <textarea id="examples" rows="4">${data.examples || ''}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Выводы</label>
+                            <textarea id="consclusions" rows="4">${data.consclusions || ''}</textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">💾 Сохранить</button>
+                            <button type="button" class="btn btn-outline" onclick="loadPatterns()">Отмена</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.getElementById('patternForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = {
+                    title: document.getElementById('title').value,
+                    term: document.getElementById('term').value,
+                    category: parseInt(document.getElementById('category_id').value),
+                    problem: document.getElementById('problem').value,
+                    solution: document.getElementById('solution').value,
+                    examples: document.getElementById('examples').value,
+                    consclusions: document.getElementById('consclusions').value
+                };
+                
+                try {
+                    if (isEdit) {
+                        await fetchAPI(`/patterns/${pattern.id}/`, {
+                            method: 'PUT',
+                            body: JSON.stringify(formData)
+                        });
+                    } else {
+                        await fetchAPI('/patterns/', {
+                            method: 'POST',
+                            body: JSON.stringify(formData)
+                        });
+                    }
+                    loadPatterns();
+                } catch (error) {
+                    console.error('Ошибка сохранения:', error);
+                    alert('Ошибка при сохранении');
+                }
+            });
+        }
+
+        async function editPattern(id) {
+            try {
+                const pattern = await fetchAPI(`/patterns/${id}/`);
+                renderForm(pattern);
+            } catch (error) {
+                console.error('Ошибка загрузки паттерна:', error);
+            }
+        }
+
+        async function archivePattern(id, archive) {
+            try {
+                if (archive) {
+                    await fetchAPI(`/patterns/${id}/archive/`, { method: 'POST' });
+                } else {
+                    await fetchAPI(`/patterns/${id}/restore/`, { method: 'POST' });
+                }
+                loadPatterns();
+            } catch (error) {
+                console.error('Ошибка:', error);
+            }
+        }
+
+        async function deletePattern(id) {
+            if (!confirm('Вы уверены, что хотите удалить этот паттерн?')) return;
+            try {
+                await fetchAPI(`/patterns/${id}/soft_delete/`, { method: 'DELETE' });
+                loadPatterns();
+            } catch (error) {
+                console.error('Ошибка удаления:', error);
+            }
+        }
+
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
+            
+            if (!token || !userStr) {
+                window.location.href = 'account.html';
+                return;
+            }
+            
+            currentUser = JSON.parse(userStr);
+            if (!currentUser.is_staff) {
+                alert('Доступ запрещен. Требуются права администратора.');
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = 'index.html';
+            });
+            
+            loadCategories();
+            loadPatterns();
+        }
+        
+        document.getElementById('newPatternBtn')?.addEventListener('click', () => renderForm(null));
+        document.getElementById('searchPatterns')?.addEventListener('input', () => loadPatterns());
+        
+        checkAuth();
+    </script>
+</body>
+</html>

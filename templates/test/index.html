@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patterns Hub - Главная</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4rem 2rem;
+            text-align: center;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+        
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            text-align: center;
+            padding: 1.5rem;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #5a67d8;
+        }
+        
+        .featured-patterns {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        
+        .category-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin: 1rem 0;
+        }
+        
+        .category-pill {
+            background: #edf2f7;
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+            text-decoration: none;
+            color: #4a5568;
+            transition: all 0.2s;
+        }
+        
+        .category-pill:hover {
+            background: #5a67d8;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">📚 Patterns Hub</a>
+            <div class="nav-links">
+                <a href="catalog.html">Каталог</a>
+                <a href="#" id="favoritesLink">Избранное</a>
+                <a href="account.html" id="accountLink">Аккаунт</a>
+                <a href="editor.html" id="editorLink" style="display: none;">Редактор</a>
+                <a href="#" id="loginBtn" class="btn btn-outline">Войти</a>
+                <a href="#" id="logoutBtn" style="display: none;" class="btn btn-outline">Выйти</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="hero">
+            <h1>📖 Паттерны проектирования</h1>
+            <p>Коллекция проверенных решений для типовых задач в разработке</p>
+        </div>
+
+        <div class="stats">
+            <div class="card stat-card">
+                <div class="stat-number" id="patternsCount">0</div>
+                <div>Паттернов</div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-number" id="categoriesCount">0</div>
+                <div>Категорий</div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-number" id="tagsCount">0</div>
+                <div>Тегов</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📂 Категории</h2>
+            <div class="category-list" id="categoriesList"></div>
+        </div>
+
+        <div class="card">
+            <h2>⭐ Популярные паттерны</h2>
+            <div class="featured-patterns" id="popularPatterns"></div>
+        </div>
+
+        <div class="card">
+            <h2>🆕 Недавно добавленные</h2>
+            <div class="featured-patterns" id="recentPatterns"></div>
+        </div>
+    </main>
+
+
+</body>
+</html>

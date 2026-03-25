@@ -1,0 +1,111 @@
+from django.db import models
+from django.contrib.auth.models import User
+
+class Categories(models.Model):
+    id = models.AutoField(primary_key=True)
+    title = models.CharField(max_length=45, blank=True, null=True)
+
+    class Meta:
+        db_table = 'categories'
+
+
+class Patterns(models.Model):
+    id = models.AutoField(primary_key=True)
+    title = models.CharField(max_length=45)
+    categories = models.ForeignKey(Categories, on_delete=models.DO_NOTHING, db_column='categories_id')
+    term = models.JSONField()
+    problem = models.JSONField()
+    solution = models.JSONField()
+    examples = models.JSONField()
+    consclusions = models.JSONField()
+
+    class Meta:
+        db_table = 'patterns'
+        unique_together = (('id', 'categories'),)
+
+
+class Profiles(models.Model):
+    id = models.AutoField(primary_key=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'users'
+
+
+class Favorites(models.Model):
+    id = models.AutoField(primary_key=True)
+    users = models.ForeignKey(Profiles, on_delete=models.DO_NOTHING, db_column='users_id')
+    patterns = models.ForeignKey(Patterns, on_delete=models.DO_NOTHING, db_column='patterns_id')
+
+    class Meta:
+        db_table = 'favorites'
+        unique_together = (('id', 'users', 'patterns'),)
+
+
+class Stacks(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=45, blank=True, null=True)
+
+    class Meta:
+        db_table = 'stacks'
+
+
+class StackPattern(models.Model):
+    id = models.AutoField(primary_key=True)
+    stacks = models.ForeignKey(Stacks, on_delete=models.DO_NOTHING, db_column='stacks_id')
+    patterns = models.ForeignKey(Patterns, on_delete=models.DO_NOTHING, db_column='patterns_id')
+
+    class Meta:
+        db_table = 'stack_pattern'
+        unique_together = (('id', 'stacks', 'patterns'),)
+
+
+class Tags(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=45, blank=True, null=True)
+
+    class Meta:
+        db_table = 'tags'
+
+
+class TagPattern(models.Model):
+    patterns = models.ForeignKey(Patterns, on_delete=models.DO_NOTHING, db_column='patterns_id')
+    tags = models.ForeignKey(Tags, on_delete=models.DO_NOTHING, db_column='tags_id')
+
+    class Meta:
+        db_table = 'tag_pattern'
+        unique_together = (('patterns', 'tags'),)
+
+
+class Ratings(models.Model):
+    id = models.AutoField(primary_key=True)
+    patterns = models.ForeignKey(Patterns, on_delete=models.DO_NOTHING, db_column='patterns_id')
+    likes = models.IntegerField(blank=True, null=True)
+    dislikes = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        db_table = 'ratings'
+        unique_together = (('id', 'patterns'),)
+
+
+class Comments(models.Model):
+    id = models.AutoField(primary_key=True)
+    patterns = models.ForeignKey(Patterns, on_delete=models.DO_NOTHING, db_column='patterns_id')
+    users = models.ForeignKey(Profiles, on_delete=models.DO_NOTHING, db_column='users_id')
+    comment = models.TextField()
+
+    class Meta:
+        db_table = 'comments'
+        unique_together = (('id', 'patterns', 'users'),)
+
+
+class Logs(models.Model):
+    id = models.AutoField(primary_key=True)
+    created_at = models.DateField(blank=True, null=True)
+    updated_at = models.DateField(blank=True, null=True)
+    edit_at = models.DateField(blank=True, null=True)
+    patterns = models.ForeignKey(Patterns, on_delete=models.DO_NOTHING, db_column='patterns_id')
+
+    class Meta:
+        db_table = 'logs'
+        unique_together = (('id', 'patterns'),)

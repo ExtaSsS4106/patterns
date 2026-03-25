@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет - Patterns Hub</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .profile-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1rem;
+        }
+        
+        .tab.active {
+            color: #5a67d8;
+            border-bottom: 2px solid #5a67d8;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .pattern-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .pattern-item:last-child {
+            border-bottom: none;
+        }
+        
+        .login-form {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+        }
+        
+        .error-message {
+            color: #e53e3e;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">📚 Patterns Hub</a>
+            <div class="nav-links">
+                <a href="catalog.html">Каталог</a>
+                <a href="#" id="favoritesLink">Избранное</a>
+                <a href="account.html">Аккаунт</a>
+                <a href="editor.html" id="editorLink" style="display: none;">Редактор</a>
+                <a href="#" id="loginBtn" class="btn btn-outline">Войти</a>
+                <a href="#" id="logoutBtn" style="display: none;" class="btn btn-outline">Выйти</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div id="content"></div>
+    </main>
+
+    <script>
+        const API_URL = 'http://localhost:8000/api';
+        let currentUser = null;
+
+        async function fetchAPI(endpoint, options = {}) {
+            const token = localStorage.getItem('token');
+            const headers = { 'Content-Type': 'application/json', ...options.headers };
+            if (token) headers['Authorization'] = `Token ${token}`;
+            
+            const response = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
+            if (!response.ok && response.status === 401) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.reload();
+            }
+            return response.json();
+        }
+
+        function renderLogin() {
+            document.getElementById('content').innerHTML = `
+                <div class="login-form">
+                    <h2>🔐 Вход в аккаунт</h2>
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label>Имя пользователя</label>
+                            <input type="text" id="username" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Пароль</label>
+                            <input type="password" id="password" required>
+                        </div>
+                        <div id="loginError" class="error-message"></div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Войти</button>
+                    </form>
+                    <p class="mt-4 text-center">Демо-аккаунт: admin / admin123</p>
+                </div>
+            `;
+            
+            document.getElementById('loginForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                
+                try {
+                    const response = await fetch('http://localhost:8000/api-token-auth/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, password })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        localStorage.setItem('token', data.token);
+                        localStorage.setItem('user', JSON.stringify({ username, is_staff: username === 'admin' }));
+                        window.location.reload();
+                    } else {
+                        document.getElementById('loginError').textContent = 'Неверное имя пользователя или пароль';
+                    }
+                } catch (error) {
+                    document.getElementById('loginError').textContent = 'Ошибка подключения';
+                }
+            });
+        }
+
+        async function renderProfile() {
+            const favorites = await fetchAPI('/favorites/patterns/');
+            const myRatings = await fetchAPI('/ratings/');
+            
+            document.getElementById('content').innerHTML = `
+                <div class="profile-card">
+                    <div class="flex justify-between align-center">
+                        <div>
+                            <h2>👤 ${currentUser.username}</h2>
+                            <p>${currentUser.is_staff ? 'Администратор' : 'Пользователь'}</p>
+                        </div>
+                        <button id="clearFavoritesBtn" class="btn btn-outline">Очистить избранное</button>
+                    </div>
+                </div>
+                
+                <div class="profile-card">
+                    <div class="tabs">
+                        <button class="tab active" data-tab="favorites">⭐ Избранное (${favorites.length})</button>
+                        <button class="tab" data-tab="ratings">⭐ Мои оценки (${myRatings.length})</button>
+                    </div>
+                    
+                    <div id="favoritesTab" class="tab-content active">
+                        ${renderFavorites(favorites)}
+                    </div>
+                    <div id="ratingsTab" class="tab-content">
+                        ${renderRatings(myRatings)}
+                    </div>
+                </div>
+            `;
+            
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabName = tab.dataset.tab;
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    document.getElementById(`${tabName}Tab`).classList.add('active');
+                });
+            });
+            
+            document.getElementById('clearFavoritesBtn')?.addEventListener('click', clearAllFavorites);
+        }
+
+        function renderFavorites(favorites) {
+            if (!favorites.length) return '<p>Нет избранных паттернов</p>';
+            return favorites.map(p => `
+                <div class="pattern-item">
+                    <a href="pattern-detail.html?id=${p.id}" style="text-decoration: none; color: inherit;">
+                        <strong>${p.title}</strong><br>
+                        <small>${p.term || ''}</small>
+                    </a>
+                    <button class="btn btn-outline" onclick="removeFavorite(${p.id})">Удалить</button>
+                </div>
+            `).join('');
+        }
+
+        function renderRatings(ratings) {
+            if (!ratings.length) return '<p>Нет оцененных паттернов</p>';
+            return ratings.map(r => `
+                <div class="pattern-item">
+                    <div>
+                        <strong>${r.pattern_title || 'Паттерн #' + r.pattern}</strong>
+                        <div class="rating">${'⭐'.repeat(r.value)}</div>
+                    </div>
+                    <button class="btn btn-outline" onclick="removeRating(${r.id}, ${r.pattern})">Удалить оценку</button>
+                </div>
+            `).join('');
+        }
+
+        async function removeFavorite(patternId) {
+            try {
+                const favorites = await fetchAPI('/favorites/');
+                const fav = favorites.find(f => f.pattern?.id === patternId);
+                if (fav) {
+                    await fetchAPI(`/favorites/${fav.id}/`, { method: 'DELETE' });
+                    renderProfile();
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+            }
+        }
+
+        async function removeRating(ratingId, patternId) {
+            try {
+                await fetchAPI(`/ratings/${ratingId}/`, { method: 'DELETE' });
+                renderProfile();
+            } catch (error) {
+                console.error('Ошибка:', error);
+            }
+        }
+
+        async function clearAllFavorites() {
+            try {
+                const favorites = await fetchAPI('/favorites/');
+                for (const fav of favorites) {
+                    await fetchAPI(`/favorites/${fav.id}/`, { method: 'DELETE' });
+                }
+                renderProfile();
+            } catch (error) {
+                console.error('Ошибка:', error);
+            }
+        }
+
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
+            
+            if (token && userStr) {
+                currentUser = JSON.parse(userStr);
+                document.getElementById('loginBtn').style.display = 'none';
+                document.getElementById('logoutBtn').style.display = 'inline-block';
+                if (currentUser.is_staff) document.getElementById('editorLink').style.display = 'inline-block';
+                renderProfile();
+            } else {
+                renderLogin();
+            }
+        }
+
+        document.getElementById('logoutBtn')?.addEventListener('click', () => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.reload();
+        });
+        
+        checkAuth();
+    </script>
+</body>
+</html>
