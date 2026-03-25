@@ -3,319 +3,738 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Редактор - Patterns Hub</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Редактор паттернов - Pattern Hub</title>
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <style>
-        .editor-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
         
-        .pattern-list {
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .navbar {
             background: white;
-            border-radius: 12px;
-            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1rem 2rem;
         }
         
-        .pattern-row {
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem;
-            border-bottom: 1px solid #e0e0e0;
         }
         
-        .pattern-row:last-child {
-            border-bottom: none;
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #5a67d8;
+            text-decoration: none;
         }
         
-        .pattern-row:hover {
-            background: #f8f9fa;
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
         }
         
-        .form-card {
+        .nav-links a {
+            text-decoration: none;
+            color: #4a5568;
+        }
+        
+        .editor-card {
             background: white;
             border-radius: 12px;
             padding: 2rem;
-            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .editor-title {
+            font-size: 1.8rem;
+            color: #5a67d8;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #4a5568;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .dynamic-input-group {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1rem;
+            background: #f8f9fa;
+        }
+        
+        .input-with-button {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .input-with-button input {
+            flex: 1;
+            padding: 0.6rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        
+        .btn-sm {
+            padding: 0.6rem 1rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        
+        .items-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .item-chip {
+            background: #edf2f7;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .item-chip.selected {
+            background: #5a67d8;
+            color: white;
+        }
+        
+        .item-chip .remove {
+            cursor: pointer;
+            color: #718096;
+            font-weight: bold;
+        }
+        
+        .item-chip.selected .remove {
+            color: white;
+        }
+        
+        .existing-items {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px dashed #ddd;
+        }
+        
+        .existing-items-title {
+            font-size: 0.8rem;
+            color: #718096;
+            margin-bottom: 0.5rem;
+        }
+        
+        .existing-item {
+            display: inline-block;
+            background: white;
+            padding: 0.3rem 0.7rem;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            margin: 0.25rem;
+            cursor: pointer;
+            border: 1px solid #ddd;
+        }
+        
+        .existing-item:hover {
+            background: #5a67d8;
+            color: white;
+        }
+        
+        .existing-item.selected {
+            background: #5a67d8;
+            color: white;
+            border-color: #5a67d8;
         }
         
         .form-actions {
             display: flex;
             gap: 1rem;
-            margin-top: 1rem;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e0e0e0;
         }
         
-        .status-badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
         }
         
-        .status-archived {
-            background: #fed7d7;
-            color: #c53030;
+        .btn-primary {
+            background: #5a67d8;
+            color: white;
         }
         
-        .status-deleted {
+        .btn-primary:hover {
+            background: #4c51bf;
+        }
+        
+        .btn-secondary {
             background: #e2e8f0;
-            color: #718096;
+            color: #4a5568;
         }
         
-        .search-box {
+        .message {
+            padding: 1rem;
+            border-radius: 8px;
             margin-bottom: 1rem;
         }
         
-        .search-box input {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
+        .message-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+        
+        .message-error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #fc8181;
+        }
+        
+        .message-info {
+            background: #bee3f8;
+            color: #2c5282;
+            border: 1px solid #90cdf4;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            .editor-card {
+                padding: 1.5rem;
+            }
         }
     </style>
 </head>
 <body>
     <nav class="navbar">
         <div class="nav-container">
-            <a href="index.html" class="logo">📚 Patterns Hub</a>
+            <a href="{% url 'index' %}" class="logo">📚 Pattern Hub</a>
             <div class="nav-links">
-                <a href="catalog.html">Каталог</a>
-                <a href="account.html">Аккаунт</a>
-                <a href="editor.html" id="editorLink">Редактор</a>
-                <a href="#" id="logoutBtn" class="btn btn-outline">Выйти</a>
+                <a href="{% url 'index' %}">Каталог</a>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'editor' %}">Редактор</a>
+                    <a href="{% url 'logout' %}">Выйти</a>
+                {% endif %}
             </div>
         </div>
     </nav>
-
-    <main class="container">
-        <div class="editor-header">
-            <h1>✏️ Редактор паттернов</h1>
-            <button id="newPatternBtn" class="btn btn-primary">➕ Новый паттерн</button>
+    
+    <div class="container">
+        <div class="editor-card">
+            <h1 class="editor-title">✏️ Редактор паттернов</h1>
+            <div id="message-container"></div>
+            
+            <form id="pattern-form">
+                {% csrf_token %}
+                
+                <!-- Заголовок -->
+                <div class="form-group">
+                    <label for="title">Заголовок *</label>
+                    <input type="text" id="title" name="title" required placeholder="Singleton">
+                </div>
+                
+                <!-- Категория -->
+                <div class="form-group">
+                    <label>Категория *</label>
+                    <div class="dynamic-input-group">
+                        <div class="input-with-button">
+                            <input type="text" id="new-category-input" placeholder="Новая категория..." onkeypress="handleCategoryEnter(event)">
+                            <button type="button" class="btn btn-sm btn-primary" onclick="addNewCategory()">➕ Добавить</button>
+                        </div>
+                        <div class="existing-items">
+                            <div class="existing-items-title">📁 Выберите существующую:</div>
+                            <div id="categories-list">
+                                {% for cat in categories %}
+                                    <span class="existing-item" data-id="{{ cat.id }}" data-name="{{ cat.title }}" onclick="selectCategory(this)">{{ cat.title }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <input type="hidden" id="category-id" name="category" required>
+                        <div id="selected-category" class="items-list"></div>
+                    </div>
+                </div>
+                
+                <!-- Теги -->
+                <div class="form-group">
+                    <label>Теги</label>
+                    <div class="dynamic-input-group">
+                        <div class="input-with-button">
+                            <input type="text" id="new-tag-input" placeholder="Новый тег..." onkeypress="handleTagEnter(event)">
+                            <button type="button" class="btn btn-sm btn-primary" onclick="addNewTag()">➕ Добавить</button>
+                        </div>
+                        <div class="existing-items">
+                            <div class="existing-items-title">🏷️ Выберите существующие:</div>
+                            <div id="tags-list">
+                                {% for tag in tags %}
+                                    <span class="existing-item" data-id="{{ tag.id }}" data-name="{{ tag.name }}" onclick="toggleTag(this)">{{ tag.name }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <input type="hidden" id="tags-ids" name="tags">
+                        <div id="selected-tags" class="items-list"></div>
+                    </div>
+                </div>
+                
+                <!-- Стеки -->
+                <div class="form-group">
+                    <label>Стек технологий</label>
+                    <div class="dynamic-input-group">
+                        <div class="input-with-button">
+                            <input type="text" id="new-stack-input" placeholder="Новый стек..." onkeypress="handleStackEnter(event)">
+                            <button type="button" class="btn btn-sm btn-primary" onclick="addNewStack()">➕ Добавить</button>
+                        </div>
+                        <div class="existing-items">
+                            <div class="existing-items-title">📚 Выберите существующие:</div>
+                            <div id="stacks-list">
+                                {% for stack in stacks %}
+                                    <span class="existing-item" data-id="{{ stack.id }}" data-name="{{ stack.name }}" onclick="toggleStack(this)">{{ stack.name }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <input type="hidden" id="stacks-ids" name="stacks">
+                        <div id="selected-stacks" class="items-list"></div>
+                    </div>
+                </div>
+                
+                <!-- Термин -->
+                <div class="form-group">
+                    <label for="term">Термин (русский)</label>
+                    <input type="text" id="term" name="term" placeholder="Одиночка">
+                </div>
+                
+                <!-- Проблема -->
+                <div class="form-group">
+                    <label for="problem">Проблема</label>
+                    <textarea id="problem" name="problem" placeholder="Опишите проблему..."></textarea>
+                </div>
+                
+                <!-- Решение -->
+                <div class="form-group">
+                    <label for="solution">Решение</label>
+                    <textarea id="solution" name="solution" placeholder="Опишите решение..."></textarea>
+                </div>
+                
+                <!-- Примеры -->
+                <div class="form-group">
+                    <label for="examples">Примеры</label>
+                    <textarea id="examples" name="examples" placeholder="Примеры использования..."></textarea>
+                </div>
+                
+                <!-- Заключение -->
+                <div class="form-group">
+                    <label for="consclusions">Заключение</label>
+                    <textarea id="consclusions" name="consclusions" placeholder="Выводы..."></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">💾 Сохранить</button>
+                    <button type="button" class="btn btn-secondary" onclick="window.location.href='{% url 'index' %}'">Отмена</button>
+                </div>
+            </form>
         </div>
-        
-        <div class="search-box">
-            <input type="text" id="searchPatterns" placeholder="Поиск паттернов...">
-        </div>
-        
-        <div id="editorContent"></div>
-    </main>
-
+    </div>
+    
     <script>
-        const API_URL = 'http://localhost:8000/api';
-        let currentUser = null;
-        let editingPattern = null;
-        let categories = [];
-
-        async function fetchAPI(endpoint, options = {}) {
-            const token = localStorage.getItem('token');
-            const headers = { 'Content-Type': 'application/json', ...options.headers };
-            if (token) headers['Authorization'] = `Token ${token}`;
+        // Состояние выбранных элементов
+        let selectedCategory = { id: null, name: null };
+        let selectedTags = [];
+        let selectedStacks = [];
+        
+        // API URLs
+        const API_URLS = {
+            createTag: '{% url "create_tag_api" %}',
+            createStack: '{% url "create_stack_api" %}',
+            createCategory: '{% url "create_category_api" %}',
+            createPattern: '{% url "create_pattern_api" %}'
+        };
+        
+        // CSRF токен
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        // ========== Категории ==========
+        function selectCategory(element) {
+            const id = parseInt(element.dataset.id);
+            const name = element.dataset.name;
             
-            const response = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
-            if (!response.ok && response.status === 403) {
-                alert('Доступ запрещен. Требуются права администратора.');
-                window.location.href = 'index.html';
+            if (selectedCategory.id === id) {
+                selectedCategory = { id: null, name: null };
+                element.classList.remove('selected');
+            } else {
+                selectedCategory = { id, name };
+                document.querySelectorAll('#categories-list .existing-item').forEach(el => {
+                    el.classList.remove('selected');
+                });
+                element.classList.add('selected');
             }
-            return response.json();
+            
+            updateSelectedCategoryDisplay();
+            document.getElementById('category-id').value = selectedCategory.id || '';
         }
-
-        async function loadCategories() {
-            try {
-                categories = await fetchAPI('/categories/');
-            } catch (error) {
-                console.error('Ошибка загрузки категорий:', error);
-            }
-        }
-
-        async function loadPatterns() {
-            try {
-                const search = document.getElementById('searchPatterns')?.value || '';
-                let url = '/patterns/?is_archived=false&is_deleted=false';
-                if (search) url += `&search=${encodeURIComponent(search)}`;
-                
-                const patterns = await fetchAPI(url);
-                renderPatternList(patterns.results || patterns);
-            } catch (error) {
-                console.error('Ошибка загрузки паттернов:', error);
+        
+        function updateSelectedCategoryDisplay() {
+            const container = document.getElementById('selected-category');
+            if (selectedCategory.id) {
+                container.innerHTML = `<span class="item-chip selected">${selectedCategory.name}</span>`;
+            } else {
+                container.innerHTML = '';
             }
         }
-
-        function renderPatternList(patterns) {
-            const container = document.getElementById('editorContent');
-            if (!patterns.length) {
-                container.innerHTML = '<div class="card text-center">😕 Паттерны не найдены</div>';
+        
+        async function addNewCategory() {
+            const input = document.getElementById('new-category-input');
+            const title = input.value.trim();
+            
+            if (!title) {
+                showMessage('Введите название категории', 'error');
                 return;
             }
             
-            container.innerHTML = `
-                <div class="pattern-list">
-                    ${patterns.map(p => `
-                        <div class="pattern-row">
-                            <div>
-                                <strong>${p.title}</strong><br>
-                                <small>${p.term || ''}</small>
-                                ${p.is_archived ? '<span class="status-badge status-archived">В архиве</span>' : ''}
-                                ${p.is_deleted ? '<span class="status-badge status-deleted">Удален</span>' : ''}
-                            </div>
-                            <div class="flex">
-                                <button class="btn btn-outline" onclick="editPattern(${p.id})">✏️</button>
-                                <button class="btn btn-outline" onclick="archivePattern(${p.id}, ${!p.is_archived})">
-                                    ${p.is_archived ? '📤 Восстановить' : '📦 В архив'}
-                                </button>
-                                <button class="btn btn-danger" onclick="deletePattern(${p.id})">🗑️</button>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        }
-
-        function renderForm(pattern = null) {
-            const isEdit = !!pattern;
-            const data = pattern || {};
-            
-            document.getElementById('editorContent').innerHTML = `
-                <div class="form-card">
-                    <h2>${isEdit ? '✏️ Редактирование' : '➕ Новый паттерн'}</h2>
-                    <form id="patternForm">
-                        <div class="form-group">
-                            <label>Название (англ.) *</label>
-                            <input type="text" id="title" value="${data.title || ''}" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Русский термин</label>
-                            <input type="text" id="term" value="${data.term || ''}">
-                        </div>
-                        <div class="form-group">
-                            <label>Категория *</label>
-                            <select id="category_id" required>
-                                <option value="">Выберите категорию</option>
-                                ${categories.map(c => `
-                                    <option value="${c.id}" ${data.category == c.id ? 'selected' : ''}>${c.title}</option>
-                                `).join('')}
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Проблема</label>
-                            <textarea id="problem" rows="4">${data.problem || ''}</textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Решение</label>
-                            <textarea id="solution" rows="6">${data.solution || ''}</textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Примеры</label>
-                            <textarea id="examples" rows="4">${data.examples || ''}</textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Выводы</label>
-                            <textarea id="consclusions" rows="4">${data.consclusions || ''}</textarea>
-                        </div>
-                        <div class="form-actions">
-                            <button type="submit" class="btn btn-primary">💾 Сохранить</button>
-                            <button type="button" class="btn btn-outline" onclick="loadPatterns()">Отмена</button>
-                        </div>
-                    </form>
-                </div>
-            `;
-            
-            document.getElementById('patternForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const formData = {
-                    title: document.getElementById('title').value,
-                    term: document.getElementById('term').value,
-                    category: parseInt(document.getElementById('category_id').value),
-                    problem: document.getElementById('problem').value,
-                    solution: document.getElementById('solution').value,
-                    examples: document.getElementById('examples').value,
-                    consclusions: document.getElementById('consclusions').value
-                };
+            try {
+                const response = await fetch(API_URLS.createCategory, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({ title: title })
+                });
                 
-                try {
-                    if (isEdit) {
-                        await fetchAPI(`/patterns/${pattern.id}/`, {
-                            method: 'PUT',
-                            body: JSON.stringify(formData)
-                        });
-                    } else {
-                        await fetchAPI('/patterns/', {
-                            method: 'POST',
-                            body: JSON.stringify(formData)
-                        });
-                    }
-                    loadPatterns();
-                } catch (error) {
-                    console.error('Ошибка сохранения:', error);
-                    alert('Ошибка при сохранении');
-                }
-            });
-        }
-
-        async function editPattern(id) {
-            try {
-                const pattern = await fetchAPI(`/patterns/${id}/`);
-                renderForm(pattern);
-            } catch (error) {
-                console.error('Ошибка загрузки паттерна:', error);
-            }
-        }
-
-        async function archivePattern(id, archive) {
-            try {
-                if (archive) {
-                    await fetchAPI(`/patterns/${id}/archive/`, { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    const list = document.getElementById('categories-list');
+                    const newItem = document.createElement('span');
+                    newItem.className = 'existing-item';
+                    newItem.dataset.id = data.id;
+                    newItem.dataset.name = data.title;
+                    newItem.textContent = data.title;
+                    newItem.onclick = () => selectCategory(newItem);
+                    list.appendChild(newItem);
+                    
+                    selectCategory(newItem);
+                    input.value = '';
+                    showMessage(`Категория "${data.title}" добавлена`, 'success');
                 } else {
-                    await fetchAPI(`/patterns/${id}/restore/`, { method: 'POST' });
+                    showMessage(data.error, 'error');
                 }
-                loadPatterns();
             } catch (error) {
-                console.error('Ошибка:', error);
+                showMessage('Ошибка при добавлении категории', 'error');
             }
         }
-
-        async function deletePattern(id) {
-            if (!confirm('Вы уверены, что хотите удалить этот паттерн?')) return;
+        
+        function handleCategoryEnter(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                addNewCategory();
+            }
+        }
+        
+        // ========== Теги ==========
+        function toggleTag(element) {
+            const id = parseInt(element.dataset.id);
+            const name = element.dataset.name;
+            
+            const index = selectedTags.findIndex(t => t.id === id);
+            
+            if (index === -1) {
+                selectedTags.push({ id, name });
+                element.classList.add('selected');
+            } else {
+                selectedTags.splice(index, 1);
+                element.classList.remove('selected');
+            }
+            
+            updateSelectedTagsDisplay();
+            document.getElementById('tags-ids').value = selectedTags.map(t => t.id).join(',');
+        }
+        
+        function updateSelectedTagsDisplay() {
+            const container = document.getElementById('selected-tags');
+            container.innerHTML = selectedTags.map(tag => `
+                <span class="item-chip selected">
+                    ${tag.name}
+                    <span class="remove" onclick="removeTag(${tag.id})">×</span>
+                </span>
+            `).join('');
+        }
+        
+        function removeTag(id) {
+            selectedTags = selectedTags.filter(t => t.id !== id);
+            const tagElement = document.querySelector(`#tags-list .existing-item[data-id="${id}"]`);
+            if (tagElement) tagElement.classList.remove('selected');
+            updateSelectedTagsDisplay();
+            document.getElementById('tags-ids').value = selectedTags.map(t => t.id).join(',');
+        }
+        
+        async function addNewTag() {
+            const input = document.getElementById('new-tag-input');
+            const name = input.value.trim();
+            
+            if (!name) {
+                showMessage('Введите название тега', 'error');
+                return;
+            }
+            
             try {
-                await fetchAPI(`/patterns/${id}/soft_delete/`, { method: 'DELETE' });
-                loadPatterns();
+                const response = await fetch(API_URLS.createTag, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({ name: name })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const list = document.getElementById('tags-list');
+                    const newItem = document.createElement('span');
+                    newItem.className = 'existing-item';
+                    newItem.dataset.id = data.id;
+                    newItem.dataset.name = data.name;
+                    newItem.textContent = data.name;
+                    newItem.onclick = () => toggleTag(newItem);
+                    list.appendChild(newItem);
+                    
+                    toggleTag(newItem);
+                    input.value = '';
+                    showMessage(`Тег "${data.name}" добавлен`, 'success');
+                } else {
+                    showMessage(data.error, 'error');
+                }
             } catch (error) {
-                console.error('Ошибка удаления:', error);
+                showMessage('Ошибка при добавлении тега', 'error');
             }
         }
-
-        function checkAuth() {
-            const token = localStorage.getItem('token');
-            const userStr = localStorage.getItem('user');
+        
+        function handleTagEnter(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                addNewTag();
+            }
+        }
+        
+        // ========== Стеки ==========
+        function toggleStack(element) {
+            const id = parseInt(element.dataset.id);
+            const name = element.dataset.name;
             
-            if (!token || !userStr) {
-                window.location.href = 'account.html';
+            const index = selectedStacks.findIndex(s => s.id === id);
+            
+            if (index === -1) {
+                selectedStacks.push({ id, name });
+                element.classList.add('selected');
+            } else {
+                selectedStacks.splice(index, 1);
+                element.classList.remove('selected');
+            }
+            
+            updateSelectedStacksDisplay();
+            document.getElementById('stacks-ids').value = selectedStacks.map(s => s.id).join(',');
+        }
+        
+        function updateSelectedStacksDisplay() {
+            const container = document.getElementById('selected-stacks');
+            container.innerHTML = selectedStacks.map(stack => `
+                <span class="item-chip selected">
+                    ${stack.name}
+                    <span class="remove" onclick="removeStack(${stack.id})">×</span>
+                </span>
+            `).join('');
+        }
+        
+        function removeStack(id) {
+            selectedStacks = selectedStacks.filter(s => s.id !== id);
+            const stackElement = document.querySelector(`#stacks-list .existing-item[data-id="${id}"]`);
+            if (stackElement) stackElement.classList.remove('selected');
+            updateSelectedStacksDisplay();
+            document.getElementById('stacks-ids').value = selectedStacks.map(s => s.id).join(',');
+        }
+        
+        async function addNewStack() {
+            const input = document.getElementById('new-stack-input');
+            const name = input.value.trim();
+            
+            if (!name) {
+                showMessage('Введите название стека', 'error');
                 return;
             }
             
-            currentUser = JSON.parse(userStr);
-            if (!currentUser.is_staff) {
-                alert('Доступ запрещен. Требуются права администратора.');
-                window.location.href = 'index.html';
-                return;
+            try {
+                const response = await fetch(API_URLS.createStack, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({ name: name })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const list = document.getElementById('stacks-list');
+                    const newItem = document.createElement('span');
+                    newItem.className = 'existing-item';
+                    newItem.dataset.id = data.id;
+                    newItem.dataset.name = data.name;
+                    newItem.textContent = data.name;
+                    newItem.onclick = () => toggleStack(newItem);
+                    list.appendChild(newItem);
+                    
+                    toggleStack(newItem);
+                    input.value = '';
+                    showMessage(`Стек "${data.name}" добавлен`, 'success');
+                } else {
+                    showMessage(data.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Ошибка при добавлении стека', 'error');
             }
-            
-            document.getElementById('logoutBtn').addEventListener('click', () => {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                window.location.href = 'index.html';
+        }
+        
+        function handleStackEnter(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                addNewStack();
+            }
+        }
+        
+        // ========== Отправка формы ==========
+        async function submitPattern(data) {
+            const response = await fetch(API_URLS.createPattern, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify(data)
             });
             
-            loadCategories();
-            loadPatterns();
+            return await response.json();
         }
         
-        document.getElementById('newPatternBtn')?.addEventListener('click', () => renderForm(null));
-        document.getElementById('searchPatterns')?.addEventListener('input', () => loadPatterns());
+        document.getElementById('pattern-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const title = document.getElementById('title').value.trim();
+            const categoryId = document.getElementById('category-id').value;
+            
+            if (!title) {
+                showMessage('Введите заголовок', 'error');
+                return;
+            }
+            
+            if (!categoryId) {
+                showMessage('Выберите категорию', 'error');
+                return;
+            }
+            
+            const formData = {
+                title: title,
+                category: parseInt(categoryId),
+                tags: selectedTags.map(t => t.id),
+                stacks: selectedStacks.map(s => s.id),
+                term: document.getElementById('term').value,
+                problem: document.getElementById('problem').value,
+                solution: document.getElementById('solution').value,
+                examples: document.getElementById('examples').value,
+                consclusions: document.getElementById('consclusions').value
+            };
+            
+            showMessage('Сохранение...', 'info');
+            
+            try {
+                const result = await submitPattern(formData);
+                
+                if (result.success) {
+                    showMessage(result.message, 'success');
+                    
+                    document.getElementById('pattern-form').reset();
+                    selectedTags = [];
+                    selectedStacks = [];
+                    selectedCategory = { id: null, name: null };
+                    updateSelectedTagsDisplay();
+                    updateSelectedStacksDisplay();
+                    updateSelectedCategoryDisplay();
+                    document.getElementById('category-id').value = '';
+                    
+                    document.querySelectorAll('#tags-list .existing-item').forEach(el => el.classList.remove('selected'));
+                    document.querySelectorAll('#stacks-list .existing-item').forEach(el => el.classList.remove('selected'));
+                    document.querySelectorAll('#categories-list .existing-item').forEach(el => el.classList.remove('selected'));
+                    
+                    setTimeout(() => {
+                        window.location.href = `/pattern/${result.pattern_id}/`;
+                    }, 1500);
+                } else {
+                    showMessage(result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Ошибка при сохранении', 'error');
+            }
+        });
         
-        checkAuth();
+        function showMessage(message, type) {
+            const container = document.getElementById('message-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message message-${type}`;
+            messageDiv.textContent = message;
+            container.innerHTML = '';
+            container.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
     </script>
 </body>
 </html>

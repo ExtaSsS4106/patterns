@@ -3,22 +3,38 @@ from django.contrib.auth.models import User
 
 class Categories(models.Model):
     id = models.AutoField(primary_key=True)
-    title = models.CharField(max_length=45, blank=True, null=True)
+    title = models.CharField(max_length=45, blank=True, null=True, unique=True)
 
     class Meta:
         db_table = 'categories'
 
+class Stacks(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=45, blank=True, null=True)
 
+    class Meta:
+        db_table = 'stacks'
+
+
+class Tags(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=45, blank=True, null=True)
+
+    class Meta:
+        db_table = 'tags'
+           
 class Patterns(models.Model):
     id = models.AutoField(primary_key=True)
     title = models.CharField(max_length=45)
     categories = models.ForeignKey(Categories, on_delete=models.DO_NOTHING, db_column='categories_id')
-    term = models.JSONField()
-    problem = models.JSONField()
-    solution = models.JSONField()
-    examples = models.JSONField()
-    consclusions = models.JSONField()
+    term = models.TextField()
+    problem = models.TextField()
+    solution = models.TextField()
+    examples = models.TextField()
+    consclusions = models.TextField()
 
+    tags = models.ManyToManyField(Tags, blank=True)
+    stacks = models.ManyToManyField(Stacks, blank=True)
     class Meta:
         db_table = 'patterns'
         unique_together = (('id', 'categories'),)
@@ -42,12 +58,7 @@ class Favorites(models.Model):
         unique_together = (('id', 'users', 'patterns'),)
 
 
-class Stacks(models.Model):
-    id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=45, blank=True, null=True)
 
-    class Meta:
-        db_table = 'stacks'
 
 
 class StackPattern(models.Model):
@@ -60,12 +71,6 @@ class StackPattern(models.Model):
         unique_together = (('id', 'stacks', 'patterns'),)
 
 
-class Tags(models.Model):
-    id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=45, blank=True, null=True)
-
-    class Meta:
-        db_table = 'tags'
 
 
 class TagPattern(models.Model):
