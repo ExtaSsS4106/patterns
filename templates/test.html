@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title></title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="">
+    </head>
+    <style>
+        body{
+            display: flex;
+            flex-direction: column;
+            flex-wrap: nowrap;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 10px;
+        }
+    </style>
+    <body>
+        <button onclick="
+        const f = new fetcher();
+        f.getAllPatterns();
+        ">getAllPatterns</button>
+
+        <input type='text' id='PatternId'></input>
+
+        <button onclick="
+        const PatternId = getElementById('PatternId');
+        const id = PatternId.value; 
+        const f = new fetcher();
+        f.getPatternById(id);
+        ">getPatternById</button>
+
+        <button onclick="
+        const f = new fetcher();
+        f.getCategories();
+        ">getCategories</button>
+
+        <input type='text' id='CategoriesId'></input>
+
+        <button onclick="
+        const CategoriesId = getElementById('CategoriesId');
+        const id = CategoriesId.value; 
+        const f = new fetcher();
+        f.getPatternsByCategories(id);
+        ">getPatternsByCategories</button>
+    </body>
+    <script src="../src/scripts/data/fetcher.js"></script>
+</html>
