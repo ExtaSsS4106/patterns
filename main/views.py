@@ -48,9 +48,10 @@ def check_favorite(request):
     
     data = json.loads(request.body)
     pattern_id = data.get('pattern_id')
+    profile = Profiles.objects.get(user=request.user)
     
     is_favorite = Favorites.objects.filter(
-        users=request.user,
+        users=profile,
         patterns_id=pattern_id
     ).exists()
     
@@ -87,15 +88,15 @@ def set_dislike(request):
     rating = get_object_or_404(Ratings, patterns__id=pattern_id)
     fav = Favorites.objects.filter(users=profile, patterns=pattern).order_by('-id')
     rat_prof, created = Rating_profiles.objects.get_or_create(profiles=profile, ratings=rating)
-    if rat_prof.status == 'dislike':
+    if rat_prof.dislike:
 
         if rating.dislikes is not None and rating.dislikes > 0:
             rating.dislikes -= 1
             rating.save()
-            rat_prof.status = 'none'
+            rat_prof.dislike = False
             rat_prof.save()
         return JsonResponse({'status': 'ok'}, status=200)
-    elif rat_prof.status == 'like' or rat_prof.status == 'none':
+    elif rat_prof.like:
         if fav.exists():
             fav.delete()
         if rating.dislikes is None:
@@ -103,7 +104,18 @@ def set_dislike(request):
         else:
             rating.dislikes += 1
         rating.save()
-        rat_prof.status = 'dislike'
+        rat_prof.dislike = True
+        rat_prof.save()
+        return JsonResponse({'status': 'ok'}, status=200)
+    else:
+        if fav.exists():
+            fav.delete()
+        if rating.dislikes is None:
+            rating.dislikes = 1
+        else:
+            rating.dislikes += 1
+        rating.save()
+        rat_prof.dislike = True
         rat_prof.save()
         return JsonResponse({'status': 'ok'}, status=200)
 
@@ -123,16 +135,16 @@ def set_like(request):
     rating = get_object_or_404(Ratings, patterns__id=pattern_id)
     fav = Favorites.objects.filter(users=profile, patterns=pattern).order_by('-id')
     rat_prof, created = Rating_profiles.objects.get_or_create(profiles=profile, ratings=rating)
-    if rat_prof.status == 'like':
+    if rat_prof.like:
         if fav.exists():
             fav.delete()
         if rating.likes is not None and rating.likes > 0:
             rating.likes -= 1
             rating.save()
-            rat_prof.status = 'none'
+            rat_prof.like = False
             rat_prof.save()
         return JsonResponse({'status': 'ok'}, status=200)
-    elif rat_prof.status == 'dislike' or rat_prof.status == 'none':
+    elif rat_prof.dislike:
         fav.create(
             users=profile,
             patterns=pattern
@@ -142,10 +154,23 @@ def set_like(request):
         else:
             rating.likes += 1
         rating.save()
-        rat_prof.status = 'like'
+        rat_prof.like = True
         rat_prof.save()
         return JsonResponse({'status': 'ok'}, status=200)
-    
+    else:
+        fav.create(
+            users=profile,
+            patterns=pattern
+        )
+        if rating.likes is None:
+            rating.likes = 1
+        else:
+            rating.likes += 1
+        rating.save()
+        rat_prof.like = True
+        rat_prof.save()
+        return JsonResponse({'status': 'ok'}, status=200)
+
 
 """API для добавления комментария"""
 @login_required

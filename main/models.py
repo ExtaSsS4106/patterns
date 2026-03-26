@@ -103,6 +103,8 @@ class Rating_profiles(models.Model):
         db_column='status',
         default='none'
     )
+    like = models.BooleanField(default=False)
+    dislike = models.BooleanField(default=False)
     class Meta:
         db_table = 'rating_profiles'
         unique_together = (('id'),)
