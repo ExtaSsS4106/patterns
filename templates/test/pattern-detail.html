@@ -4,9 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ pattern.title }} - Patterns Hub</title>
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             max-width: 900px;
             margin: 0 auto;
             padding: 20px;
@@ -18,6 +25,7 @@
             border-radius: 12px;
             padding: 30px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
         }
         
         .pattern-title {
@@ -82,10 +90,138 @@
             font-size: 0.85rem;
             color: #4a5568;
         }
+        
+        /* Стили для комментариев */
+        .comments-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .comments-title {
+            font-size: 1.5rem;
+            color: #5a67d8;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .comment-form {
+            margin-bottom: 30px;
+        }
+        
+        .comment-form textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .comment-form textarea:focus {
+            outline: none;
+            border-color: #5a67d8;
+            box-shadow: 0 0 0 3px rgba(90,103,216,0.1);
+        }
+        
+        .comment-form button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background: #5a67d8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        
+        .comment-form button:hover {
+            background: #4c51bf;
+            transform: translateY(-1px);
+        }
+        
+        .comments-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .comment {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 3px solid #5a67d8;
+        }
+        
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+        
+        .comment-author {
+            font-weight: bold;
+            color: #5a67d8;
+        }
+        
+        .comment-date {
+            color: #718096;
+        }
+        
+        .comment-text {
+            line-height: 1.5;
+            color: #4a5568;
+        }
+        
+        .no-comments {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+        
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .message-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+        
+        .message-error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #fc8181;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .pattern-container,
+            .comments-section {
+                padding: 20px;
+            }
+            
+            .pattern-title {
+                font-size: 1.5rem;
+            }
+        }
     </style>
 </head>
 <body>
-    <a href="" class="back-link">← Назад к каталогу</a>
+    <a href="javascript:history.back()" class="back-link">← Назад к каталогу</a>
     
     <div class="pattern-container">
         <div class="pattern-title">{{ pattern.title }}</div>
@@ -133,5 +269,151 @@
         </div>
         {% endif %}
     </div>
+    
+    <!-- Секция комментариев -->
+    <div class="comments-section">
+        <h3 class="comments-title">💬 Комментарии</h3>
+        
+        {% if user.is_authenticated %}
+        <div class="comment-form">
+            <textarea id="comment-text" placeholder="Напишите ваш комментарий..."></textarea>
+            <button onclick="addComment()">📝 Отправить комментарий</button>
+        </div>
+        {% else %}
+        <div class="message message-info" style="background: #bee3f8; color: #2c5282;">
+            🔐 <a href="{% url 'sign_up' %}" style="color: #2c5282;">Войдите</a> чтобы оставить комментарий
+        </div>
+        {% endif %}
+        
+        <div id="message-container"></div>
+        
+        <div id="comments-list" class="comments-list">
+            <div style="text-align: center; padding: 20px;">Загрузка комментариев...</div>
+        </div>
+    </div>
+    
+    <script>
+        const patternId = {{ pattern.id }};
+        const csrftoken = document.querySelector('[name=csrf-token]')?.content || 
+                          document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+        
+        // Загрузка комментариев
+        async function loadComments() {
+            try {
+                const response = await fetch('/select_comments/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({ pattern_id: patternId })
+                });
+                
+                const data = await response.json();
+                
+                if (data.comments) {
+                    renderComments(data.comments);
+                } else {
+                    document.getElementById('comments-list').innerHTML = '<div class="no-comments">😕 Пока нет комментариев. Будьте первым!</div>';
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки комментариев:', error);
+                document.getElementById('comments-list').innerHTML = '<div class="no-comments">❌ Ошибка загрузки комментариев</div>';
+            }
+        }
+        
+        // Отображение комментариев
+        function renderComments(comments) {
+            const container = document.getElementById('comments-list');
+            
+            if (!comments || comments.length === 0) {
+                container.innerHTML = '<div class="no-comments">😕 Пока нет комментариев. Будьте первым!</div>';
+                return;
+            }
+            
+            container.innerHTML = comments.map(comment => `
+                <div class="comment">
+                    <div class="comment-header">
+                        <span class="comment-author">👤 ${escapeHtml(comment.user__name || 'Пользователь')}</span>
+                        <span class="comment-date">${formatDate(comment.created_at)}</span>
+                    </div>
+                    <div class="comment-text">${escapeHtml(comment.comment)}</div>
+                </div>
+            `).join('');
+        }
+        
+        // Добавление комментария
+        async function addComment() {
+            const textarea = document.getElementById('comment-text');
+            const text = textarea.value.trim();
+            
+            if (!text) {
+                showMessage('Введите текст комментария', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/add_comment/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({
+                        pattern_id: patternId,
+                        text: text
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.comments) {
+                    showMessage('Комментарий добавлен!', 'success');
+                    textarea.value = '';
+                    loadComments(); // Перезагружаем комментарии
+                } else {
+                    showMessage('Ошибка при добавлении комментария', 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showMessage('Ошибка при отправке комментария', 'error');
+            }
+        }
+        
+        function showMessage(message, type) {
+            const container = document.getElementById('message-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message message-${type}`;
+            messageDiv.textContent = message;
+            container.innerHTML = '';
+            container.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 3000);
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toLocaleString('ru-RU', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        // Загружаем комментарии при загрузке страницы
+        loadComments();
+    </script>
 </body>
 </html>

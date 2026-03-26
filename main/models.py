@@ -98,7 +98,7 @@ class Comments(models.Model):
     patterns = models.ForeignKey(Patterns, on_delete=models.DO_NOTHING, db_column='patterns_id')
     users = models.ForeignKey(Profiles, on_delete=models.DO_NOTHING, db_column='users_id')
     comment = models.TextField()
-
+    created_at = models.DateTimeField(auto_now_add=True) 
     class Meta:
         db_table = 'comments'
         unique_together = (('id', 'patterns', 'users'),)

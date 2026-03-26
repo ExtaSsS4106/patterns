@@ -269,7 +269,9 @@
     
     <div class="container">
         <div class="editor-card">
-            <h1 class="editor-title">✏️ Редактор паттернов</h1>
+            <h1 class="editor-title">
+                {% if pattern %}✏️ Редактирование: {{ pattern.title }}{% else %}➕ Создание нового паттерна{% endif %}
+            </h1>
             <div id="message-container"></div>
             
             <form id="pattern-form">
@@ -278,7 +280,7 @@
                 <!-- Заголовок -->
                 <div class="form-group">
                     <label for="title">Заголовок *</label>
-                    <input type="text" id="title" name="title" required placeholder="Singleton">
+                    <input type="text" id="title" name="title" required placeholder="Singleton" value="{{ pattern.title|default:'' }}">
                 </div>
                 
                 <!-- Категория -->
@@ -297,7 +299,7 @@
                                 {% endfor %}
                             </div>
                         </div>
-                        <input type="hidden" id="category-id" name="category" required>
+                        <input type="hidden" id="category-id" name="category" value="{{ pattern.categories.id|default:'' }}" required>
                         <div id="selected-category" class="items-list"></div>
                     </div>
                 </div>
@@ -314,11 +316,13 @@
                             <div class="existing-items-title">🏷️ Выберите существующие:</div>
                             <div id="tags-list">
                                 {% for tag in tags %}
-                                    <span class="existing-item" data-id="{{ tag.id }}" data-name="{{ tag.name }}" onclick="toggleTag(this)">{{ tag.name }}</span>
+                                    <span class="existing-item" data-id="{{ tag.id }}" data-name="{{ tag.name }}" 
+                                          {% if tag.id in selected_tag_ids %}class="existing-item selected"{% else %}class="existing-item"{% endif %}
+                                          onclick="toggleTag(this)">{{ tag.name }}</span>
                                 {% endfor %}
                             </div>
                         </div>
-                        <input type="hidden" id="tags-ids" name="tags">
+                        <input type="hidden" id="tags-ids" name="tags" value="{{ selected_tag_ids|join:',' }}">
                         <div id="selected-tags" class="items-list"></div>
                     </div>
                 </div>
@@ -335,11 +339,13 @@
                             <div class="existing-items-title">📚 Выберите существующие:</div>
                             <div id="stacks-list">
                                 {% for stack in stacks %}
-                                    <span class="existing-item" data-id="{{ stack.id }}" data-name="{{ stack.name }}" onclick="toggleStack(this)">{{ stack.name }}</span>
+                                    <span class="existing-item" data-id="{{ stack.id }}" data-name="{{ stack.name }}" 
+                                          {% if stack.id in selected_stack_ids %}class="existing-item selected"{% else %}class="existing-item"{% endif %}
+                                          onclick="toggleStack(this)">{{ stack.name }}</span>
                                 {% endfor %}
                             </div>
                         </div>
-                        <input type="hidden" id="stacks-ids" name="stacks">
+                        <input type="hidden" id="stacks-ids" name="stacks" value="{{ selected_stack_ids|join:',' }}">
                         <div id="selected-stacks" class="items-list"></div>
                     </div>
                 </div>
@@ -347,31 +353,31 @@
                 <!-- Термин -->
                 <div class="form-group">
                     <label for="term">Термин (русский)</label>
-                    <input type="text" id="term" name="term" placeholder="Одиночка">
+                    <input type="text" id="term" name="term" placeholder="Одиночка" value="{{ pattern.term|default:'' }}">
                 </div>
                 
                 <!-- Проблема -->
                 <div class="form-group">
                     <label for="problem">Проблема</label>
-                    <textarea id="problem" name="problem" placeholder="Опишите проблему..."></textarea>
+                    <textarea id="problem" name="problem" placeholder="Опишите проблему...">{{ pattern.problem|default:'' }}</textarea>
                 </div>
                 
                 <!-- Решение -->
                 <div class="form-group">
                     <label for="solution">Решение</label>
-                    <textarea id="solution" name="solution" placeholder="Опишите решение..."></textarea>
+                    <textarea id="solution" name="solution" placeholder="Опишите решение...">{{ pattern.solution|default:'' }}</textarea>
                 </div>
                 
                 <!-- Примеры -->
                 <div class="form-group">
                     <label for="examples">Примеры</label>
-                    <textarea id="examples" name="examples" placeholder="Примеры использования..."></textarea>
+                    <textarea id="examples" name="examples" placeholder="Примеры использования...">{{ pattern.examples|default:'' }}</textarea>
                 </div>
                 
                 <!-- Заключение -->
                 <div class="form-group">
                     <label for="consclusions">Заключение</label>
-                    <textarea id="consclusions" name="consclusions" placeholder="Выводы..."></textarea>
+                    <textarea id="consclusions" name="consclusions" placeholder="Выводы...">{{ pattern.consclusions|default:'' }}</textarea>
                 </div>
                 
                 <div class="form-actions">
@@ -383,358 +389,417 @@
     </div>
     
     <script>
-        // Состояние выбранных элементов
-        let selectedCategory = { id: null, name: null };
-        let selectedTags = [];
-        let selectedStacks = [];
+    // Определяем, редактируем мы или создаем
+    const isEditing = {{ pattern.id|default:'null' }} !== null;
+    const patternId = {{ pattern.id|default:'null' }};
+    
+    // Состояние выбранных элементов
+    let selectedCategory = { id: {{ pattern.categories.id|default:'null' }}, name: '{{ pattern.categories.title|default:''|escapejs }}' };
+    let selectedTags = [];
+    let selectedStacks = [];
+    
+    // API URLs - ВАЖНО: используем условное создание URL
+    let updatePatternUrl = null;
+    {% if pattern %}
+        updatePatternUrl = '{% url "update_pattern_api" pattern.id %}';
+    {% endif %}
+    
+    const API_URLS = {
+        createTag: '{% url "create_tag_api" %}',
+        createStack: '{% url "create_stack_api" %}',
+        createCategory: '{% url "create_category_api" %}',
+        createPattern: '{% url "create_pattern_api" %}',
+        updatePattern: updatePatternUrl
+    };
+    
+    // CSRF токен
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    // Остальной код остается без изменений...
+    
+    // Инициализация выбранных тегов и стеков
+    function initSelectedItems() {
+        // Инициализация тегов
+        const tagIds = document.getElementById('tags-ids').value;
+        if (tagIds) {
+            const ids = tagIds.split(',').map(Number).filter(id => id);
+            ids.forEach(id => {
+                const tagElement = document.querySelector(`#tags-list .existing-item[data-id="${id}"]`);
+                if (tagElement) {
+                    selectedTags.push({ id: id, name: tagElement.dataset.name });
+                    tagElement.classList.add('selected');
+                }
+            });
+        }
         
-        // API URLs
-        const API_URLS = {
-            createTag: '{% url "create_tag_api" %}',
-            createStack: '{% url "create_stack_api" %}',
-            createCategory: '{% url "create_category_api" %}',
-            createPattern: '{% url "create_pattern_api" %}'
-        };
+        // Инициализация стеков
+        const stackIds = document.getElementById('stacks-ids').value;
+        if (stackIds) {
+            const ids = stackIds.split(',').map(Number).filter(id => id);
+            ids.forEach(id => {
+                const stackElement = document.querySelector(`#stacks-list .existing-item[data-id="${id}"]`);
+                if (stackElement) {
+                    selectedStacks.push({ id: id, name: stackElement.dataset.name });
+                    stackElement.classList.add('selected');
+                }
+            });
+        }
         
-        // CSRF токен
-        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        
-        // ========== Категории ==========
-        function selectCategory(element) {
-            const id = parseInt(element.dataset.id);
-            const name = element.dataset.name;
-            
-            if (selectedCategory.id === id) {
-                selectedCategory = { id: null, name: null };
-                element.classList.remove('selected');
-            } else {
-                selectedCategory = { id, name };
-                document.querySelectorAll('#categories-list .existing-item').forEach(el => {
-                    el.classList.remove('selected');
-                });
-                element.classList.add('selected');
+        // Инициализация категории
+        if (selectedCategory.id) {
+            const categoryElement = document.querySelector(`#categories-list .existing-item[data-id="${selectedCategory.id}"]`);
+            if (categoryElement) {
+                categoryElement.classList.add('selected');
             }
-            
             updateSelectedCategoryDisplay();
-            document.getElementById('category-id').value = selectedCategory.id || '';
         }
         
-        function updateSelectedCategoryDisplay() {
-            const container = document.getElementById('selected-category');
-            if (selectedCategory.id) {
-                container.innerHTML = `<span class="item-chip selected">${selectedCategory.name}</span>`;
-            } else {
-                container.innerHTML = '';
-            }
+        updateSelectedTagsDisplay();
+        updateSelectedStacksDisplay();
+    }
+    
+    // ========== Категории ==========
+    function selectCategory(element) {
+        const id = parseInt(element.dataset.id);
+        const name = element.dataset.name;
+        
+        if (selectedCategory.id === id) {
+            selectedCategory = { id: null, name: null };
+            element.classList.remove('selected');
+        } else {
+            selectedCategory = { id, name };
+            document.querySelectorAll('#categories-list .existing-item').forEach(el => {
+                el.classList.remove('selected');
+            });
+            element.classList.add('selected');
         }
         
-        async function addNewCategory() {
-            const input = document.getElementById('new-category-input');
-            const title = input.value.trim();
-            
-            if (!title) {
-                showMessage('Введите название категории', 'error');
-                return;
-            }
-            
-            try {
-                const response = await fetch(API_URLS.createCategory, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrftoken
-                    },
-                    body: JSON.stringify({ title: title })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    const list = document.getElementById('categories-list');
-                    const newItem = document.createElement('span');
-                    newItem.className = 'existing-item';
-                    newItem.dataset.id = data.id;
-                    newItem.dataset.name = data.title;
-                    newItem.textContent = data.title;
-                    newItem.onclick = () => selectCategory(newItem);
-                    list.appendChild(newItem);
-                    
-                    selectCategory(newItem);
-                    input.value = '';
-                    showMessage(`Категория "${data.title}" добавлена`, 'success');
-                } else {
-                    showMessage(data.error, 'error');
-                }
-            } catch (error) {
-                showMessage('Ошибка при добавлении категории', 'error');
-            }
+        updateSelectedCategoryDisplay();
+        document.getElementById('category-id').value = selectedCategory.id || '';
+    }
+    
+    function updateSelectedCategoryDisplay() {
+        const container = document.getElementById('selected-category');
+        if (selectedCategory.id) {
+            container.innerHTML = `<span class="item-chip selected">${escapeHtml(selectedCategory.name)}</span>`;
+        } else {
+            container.innerHTML = '';
+        }
+    }
+    
+    async function addNewCategory() {
+        const input = document.getElementById('new-category-input');
+        const title = input.value.trim();
+        
+        if (!title) {
+            showMessage('Введите название категории', 'error');
+            return;
         }
         
-        function handleCategoryEnter(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                addNewCategory();
-            }
-        }
-        
-        // ========== Теги ==========
-        function toggleTag(element) {
-            const id = parseInt(element.dataset.id);
-            const name = element.dataset.name;
-            
-            const index = selectedTags.findIndex(t => t.id === id);
-            
-            if (index === -1) {
-                selectedTags.push({ id, name });
-                element.classList.add('selected');
-            } else {
-                selectedTags.splice(index, 1);
-                element.classList.remove('selected');
-            }
-            
-            updateSelectedTagsDisplay();
-            document.getElementById('tags-ids').value = selectedTags.map(t => t.id).join(',');
-        }
-        
-        function updateSelectedTagsDisplay() {
-            const container = document.getElementById('selected-tags');
-            container.innerHTML = selectedTags.map(tag => `
-                <span class="item-chip selected">
-                    ${tag.name}
-                    <span class="remove" onclick="removeTag(${tag.id})">×</span>
-                </span>
-            `).join('');
-        }
-        
-        function removeTag(id) {
-            selectedTags = selectedTags.filter(t => t.id !== id);
-            const tagElement = document.querySelector(`#tags-list .existing-item[data-id="${id}"]`);
-            if (tagElement) tagElement.classList.remove('selected');
-            updateSelectedTagsDisplay();
-            document.getElementById('tags-ids').value = selectedTags.map(t => t.id).join(',');
-        }
-        
-        async function addNewTag() {
-            const input = document.getElementById('new-tag-input');
-            const name = input.value.trim();
-            
-            if (!name) {
-                showMessage('Введите название тега', 'error');
-                return;
-            }
-            
-            try {
-                const response = await fetch(API_URLS.createTag, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrftoken
-                    },
-                    body: JSON.stringify({ name: name })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    const list = document.getElementById('tags-list');
-                    const newItem = document.createElement('span');
-                    newItem.className = 'existing-item';
-                    newItem.dataset.id = data.id;
-                    newItem.dataset.name = data.name;
-                    newItem.textContent = data.name;
-                    newItem.onclick = () => toggleTag(newItem);
-                    list.appendChild(newItem);
-                    
-                    toggleTag(newItem);
-                    input.value = '';
-                    showMessage(`Тег "${data.name}" добавлен`, 'success');
-                } else {
-                    showMessage(data.error, 'error');
-                }
-            } catch (error) {
-                showMessage('Ошибка при добавлении тега', 'error');
-            }
-        }
-        
-        function handleTagEnter(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                addNewTag();
-            }
-        }
-        
-        // ========== Стеки ==========
-        function toggleStack(element) {
-            const id = parseInt(element.dataset.id);
-            const name = element.dataset.name;
-            
-            const index = selectedStacks.findIndex(s => s.id === id);
-            
-            if (index === -1) {
-                selectedStacks.push({ id, name });
-                element.classList.add('selected');
-            } else {
-                selectedStacks.splice(index, 1);
-                element.classList.remove('selected');
-            }
-            
-            updateSelectedStacksDisplay();
-            document.getElementById('stacks-ids').value = selectedStacks.map(s => s.id).join(',');
-        }
-        
-        function updateSelectedStacksDisplay() {
-            const container = document.getElementById('selected-stacks');
-            container.innerHTML = selectedStacks.map(stack => `
-                <span class="item-chip selected">
-                    ${stack.name}
-                    <span class="remove" onclick="removeStack(${stack.id})">×</span>
-                </span>
-            `).join('');
-        }
-        
-        function removeStack(id) {
-            selectedStacks = selectedStacks.filter(s => s.id !== id);
-            const stackElement = document.querySelector(`#stacks-list .existing-item[data-id="${id}"]`);
-            if (stackElement) stackElement.classList.remove('selected');
-            updateSelectedStacksDisplay();
-            document.getElementById('stacks-ids').value = selectedStacks.map(s => s.id).join(',');
-        }
-        
-        async function addNewStack() {
-            const input = document.getElementById('new-stack-input');
-            const name = input.value.trim();
-            
-            if (!name) {
-                showMessage('Введите название стека', 'error');
-                return;
-            }
-            
-            try {
-                const response = await fetch(API_URLS.createStack, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrftoken
-                    },
-                    body: JSON.stringify({ name: name })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    const list = document.getElementById('stacks-list');
-                    const newItem = document.createElement('span');
-                    newItem.className = 'existing-item';
-                    newItem.dataset.id = data.id;
-                    newItem.dataset.name = data.name;
-                    newItem.textContent = data.name;
-                    newItem.onclick = () => toggleStack(newItem);
-                    list.appendChild(newItem);
-                    
-                    toggleStack(newItem);
-                    input.value = '';
-                    showMessage(`Стек "${data.name}" добавлен`, 'success');
-                } else {
-                    showMessage(data.error, 'error');
-                }
-            } catch (error) {
-                showMessage('Ошибка при добавлении стека', 'error');
-            }
-        }
-        
-        function handleStackEnter(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                addNewStack();
-            }
-        }
-        
-        // ========== Отправка формы ==========
-        async function submitPattern(data) {
-            const response = await fetch(API_URLS.createPattern, {
+        try {
+            const response = await fetch(API_URLS.createCategory, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': csrftoken
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify({ title: title })
             });
             
-            return await response.json();
+            const data = await response.json();
+            
+            if (data.success) {
+                const list = document.getElementById('categories-list');
+                const newItem = document.createElement('span');
+                newItem.className = 'existing-item';
+                newItem.dataset.id = data.id;
+                newItem.dataset.name = data.title;
+                newItem.textContent = data.title;
+                newItem.onclick = () => selectCategory(newItem);
+                list.appendChild(newItem);
+                
+                selectCategory(newItem);
+                input.value = '';
+                showMessage(`Категория "${data.title}" добавлена`, 'success');
+            } else {
+                showMessage(data.error, 'error');
+            }
+        } catch (error) {
+            showMessage('Ошибка при добавлении категории', 'error');
+        }
+    }
+    
+    function handleCategoryEnter(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            addNewCategory();
+        }
+    }
+    
+    // ========== Теги ==========
+    function toggleTag(element) {
+        const id = parseInt(element.dataset.id);
+        const name = element.dataset.name;
+        
+        const index = selectedTags.findIndex(t => t.id === id);
+        
+        if (index === -1) {
+            selectedTags.push({ id, name });
+            element.classList.add('selected');
+        } else {
+            selectedTags.splice(index, 1);
+            element.classList.remove('selected');
         }
         
-        document.getElementById('pattern-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        updateSelectedTagsDisplay();
+        document.getElementById('tags-ids').value = selectedTags.map(t => t.id).join(',');
+    }
+    
+    function updateSelectedTagsDisplay() {
+        const container = document.getElementById('selected-tags');
+        container.innerHTML = selectedTags.map(tag => `
+            <span class="item-chip selected">
+                ${escapeHtml(tag.name)}
+                <span class="remove" onclick="removeTag(${tag.id})">×</span>
+            </span>
+        `).join('');
+    }
+    
+    function removeTag(id) {
+        selectedTags = selectedTags.filter(t => t.id !== id);
+        const tagElement = document.querySelector(`#tags-list .existing-item[data-id="${id}"]`);
+        if (tagElement) tagElement.classList.remove('selected');
+        updateSelectedTagsDisplay();
+        document.getElementById('tags-ids').value = selectedTags.map(t => t.id).join(',');
+    }
+    
+    async function addNewTag() {
+        const input = document.getElementById('new-tag-input');
+        const name = input.value.trim();
+        
+        if (!name) {
+            showMessage('Введите название тега', 'error');
+            return;
+        }
+        
+        try {
+            const response = await fetch(API_URLS.createTag, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({ name: name })
+            });
             
-            const title = document.getElementById('title').value.trim();
-            const categoryId = document.getElementById('category-id').value;
+            const data = await response.json();
             
-            if (!title) {
-                showMessage('Введите заголовок', 'error');
-                return;
-            }
-            
-            if (!categoryId) {
-                showMessage('Выберите категорию', 'error');
-                return;
-            }
-            
-            const formData = {
-                title: title,
-                category: parseInt(categoryId),
-                tags: selectedTags.map(t => t.id),
-                stacks: selectedStacks.map(s => s.id),
-                term: document.getElementById('term').value,
-                problem: document.getElementById('problem').value,
-                solution: document.getElementById('solution').value,
-                examples: document.getElementById('examples').value,
-                consclusions: document.getElementById('consclusions').value
-            };
-            
-            showMessage('Сохранение...', 'info');
-            
-            try {
-                const result = await submitPattern(formData);
+            if (data.success) {
+                const list = document.getElementById('tags-list');
+                const newItem = document.createElement('span');
+                newItem.className = 'existing-item';
+                newItem.dataset.id = data.id;
+                newItem.dataset.name = data.name;
+                newItem.textContent = data.name;
+                newItem.onclick = () => toggleTag(newItem);
+                list.appendChild(newItem);
                 
-                if (result.success) {
-                    showMessage(result.message, 'success');
-                    
-                    document.getElementById('pattern-form').reset();
-                    selectedTags = [];
-                    selectedStacks = [];
-                    selectedCategory = { id: null, name: null };
-                    updateSelectedTagsDisplay();
-                    updateSelectedStacksDisplay();
-                    updateSelectedCategoryDisplay();
-                    document.getElementById('category-id').value = '';
-                    
-                    document.querySelectorAll('#tags-list .existing-item').forEach(el => el.classList.remove('selected'));
-                    document.querySelectorAll('#stacks-list .existing-item').forEach(el => el.classList.remove('selected'));
-                    document.querySelectorAll('#categories-list .existing-item').forEach(el => el.classList.remove('selected'));
-                    
-                    setTimeout(() => {
-                        window.location.href = `/pattern/${result.pattern_id}/`;
-                    }, 1500);
-                } else {
-                    showMessage(result.error, 'error');
-                }
-            } catch (error) {
-                showMessage('Ошибка при сохранении', 'error');
+                toggleTag(newItem);
+                input.value = '';
+                showMessage(`Тег "${data.name}" добавлен`, 'success');
+            } else {
+                showMessage(data.error, 'error');
             }
+        } catch (error) {
+            showMessage('Ошибка при добавлении тега', 'error');
+        }
+    }
+    
+    function handleTagEnter(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            addNewTag();
+        }
+    }
+    
+    // ========== Стеки ==========
+    function toggleStack(element) {
+        const id = parseInt(element.dataset.id);
+        const name = element.dataset.name;
+        
+        const index = selectedStacks.findIndex(s => s.id === id);
+        
+        if (index === -1) {
+            selectedStacks.push({ id, name });
+            element.classList.add('selected');
+        } else {
+            selectedStacks.splice(index, 1);
+            element.classList.remove('selected');
+        }
+        
+        updateSelectedStacksDisplay();
+        document.getElementById('stacks-ids').value = selectedStacks.map(s => s.id).join(',');
+    }
+    
+    function updateSelectedStacksDisplay() {
+        const container = document.getElementById('selected-stacks');
+        container.innerHTML = selectedStacks.map(stack => `
+            <span class="item-chip selected">
+                ${escapeHtml(stack.name)}
+                <span class="remove" onclick="removeStack(${stack.id})">×</span>
+            </span>
+        `).join('');
+    }
+    
+    function removeStack(id) {
+        selectedStacks = selectedStacks.filter(s => s.id !== id);
+        const stackElement = document.querySelector(`#stacks-list .existing-item[data-id="${id}"]`);
+        if (stackElement) stackElement.classList.remove('selected');
+        updateSelectedStacksDisplay();
+        document.getElementById('stacks-ids').value = selectedStacks.map(s => s.id).join(',');
+    }
+    
+    async function addNewStack() {
+        const input = document.getElementById('new-stack-input');
+        const name = input.value.trim();
+        
+        if (!name) {
+            showMessage('Введите название стека', 'error');
+            return;
+        }
+        
+        try {
+            const response = await fetch(API_URLS.createStack, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({ name: name })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                const list = document.getElementById('stacks-list');
+                const newItem = document.createElement('span');
+                newItem.className = 'existing-item';
+                newItem.dataset.id = data.id;
+                newItem.dataset.name = data.name;
+                newItem.textContent = data.name;
+                newItem.onclick = () => toggleStack(newItem);
+                list.appendChild(newItem);
+                
+                toggleStack(newItem);
+                input.value = '';
+                showMessage(`Стек "${data.name}" добавлен`, 'success');
+            } else {
+                showMessage(data.error, 'error');
+            }
+        } catch (error) {
+            showMessage('Ошибка при добавлении стека', 'error');
+        }
+    }
+    
+    function handleStackEnter(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            addNewStack();
+        }
+    }
+    
+    // ========== Отправка формы ==========
+    async function submitPattern(data) {
+        let url, method;
+        if (isEditing && patternId && API_URLS.updatePattern) {
+            url = API_URLS.updatePattern;
+            method = 'PUT';
+        } else {
+            url = API_URLS.createPattern;
+            method = 'POST';
+        }
+        
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify(data)
         });
         
-        function showMessage(message, type) {
-            const container = document.getElementById('message-container');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message message-${type}`;
-            messageDiv.textContent = message;
-            container.innerHTML = '';
-            container.appendChild(messageDiv);
-            
-            setTimeout(() => {
-                messageDiv.remove();
-            }, 5000);
+        return await response.json();
+    }
+    
+    document.getElementById('pattern-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const title = document.getElementById('title').value.trim();
+        const categoryId = document.getElementById('category-id').value;
+        
+        if (!title) {
+            showMessage('Введите заголовок', 'error');
+            return;
         }
-    </script>
+        
+        if (!categoryId) {
+            showMessage('Выберите категорию', 'error');
+            return;
+        }
+        
+        const formData = {
+            title: title,
+            category: parseInt(categoryId),
+            tags: selectedTags.map(t => t.id),
+            stacks: selectedStacks.map(s => s.id),
+            term: document.getElementById('term').value,
+            problem: document.getElementById('problem').value,
+            solution: document.getElementById('solution').value,
+            examples: document.getElementById('examples').value,
+            consclusions: document.getElementById('consclusions').value
+        };
+        
+        showMessage('Сохранение...', 'info');
+        
+        try {
+            const result = await submitPattern(formData);
+            
+            if (result.success) {
+                showMessage(result.message, 'success');
+                
+                setTimeout(() => {
+                    window.location.href = `/pattern/${result.pattern_id}/`;
+                }, 1500);
+            } else {
+                showMessage(result.error, 'error');
+            }
+        } catch (error) {
+            showMessage('Ошибка при сохранении', 'error');
+        }
+    });
+    
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    function showMessage(message, type) {
+        const container = document.getElementById('message-container');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message message-${type}`;
+        messageDiv.textContent = message;
+        container.innerHTML = '';
+        container.appendChild(messageDiv);
+        
+        setTimeout(() => {
+            messageDiv.remove();
+        }, 5000);
+    }
+    
+    // Инициализация
+    initSelectedItems();
+</script>
 </body>
 </html>
