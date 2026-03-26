@@ -48,6 +48,7 @@ class Profiles(models.Model):
         db_table = 'users'
 
 
+
 class Favorites(models.Model):
     id = models.AutoField(primary_key=True)
     users = models.ForeignKey(Profiles, on_delete=models.DO_NOTHING, db_column='users_id')
@@ -92,6 +93,19 @@ class Ratings(models.Model):
         db_table = 'ratings'
         unique_together = (('id', 'patterns'),)
 
+class Rating_profiles(models.Model):
+    id = models.AutoField(primary_key=True)
+    profiles = models.ForeignKey(Profiles, on_delete=models.CASCADE)
+    ratings = models.ForeignKey(Ratings, on_delete=models.CASCADE)
+    status = models.CharField(
+        max_length=10,
+        choices=[('none', 'none'), ('like', 'like'), ('dislike', 'dislike')],
+        db_column='status',
+        default='none'
+    )
+    class Meta:
+        db_table = 'rating_profiles'
+        unique_together = (('id'),)
 
 class Comments(models.Model):
     id = models.AutoField(primary_key=True)
@@ -106,9 +120,8 @@ class Comments(models.Model):
 
 class Logs(models.Model):
     id = models.AutoField(primary_key=True)
-    created_at = models.DateField(blank=True, null=True)
-    updated_at = models.DateField(blank=True, null=True)
-    edit_at = models.DateField(blank=True, null=True)
+    created_at = models.DateField(auto_now_add=True, blank=True, null=True)
+    updated_at = models.DateField(auto_now=True, blank=True, null=True)
     patterns = models.ForeignKey(Patterns, on_delete=models.DO_NOTHING, db_column='patterns_id')
 
     class Meta:

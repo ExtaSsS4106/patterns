@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Каталог паттернов</title>
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 800px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
             background: #f5f5f5;
@@ -21,22 +22,100 @@
         }
         
         .pattern-item {
-            padding: 12px;
+            padding: 15px;
             border-bottom: 1px solid #e0e0e0;
-            font-size: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
         .pattern-item:last-child {
             border-bottom: none;
         }
         
-        .pattern-item a {
-            text-decoration: none;
-            color: #5a67d8;
+        .pattern-info {
+            flex: 1;
         }
         
-        .pattern-item a:hover {
+        .pattern-info a {
+            text-decoration: none;
+            color: #5a67d8;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        .pattern-info a:hover {
             text-decoration: underline;
+        }
+        
+        .pattern-term {
+            color: #666;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        
+        .pattern-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            padding: 5px 10px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .like-btn {
+            color: #e53e3e;
+        }
+        
+        .like-btn:hover {
+            background: #fed7d7;
+            transform: scale(1.05);
+        }
+        
+        .like-btn.active {
+            background: #fed7d7;
+        }
+        
+        .dislike-btn {
+            color: #718096;
+        }
+        
+        .dislike-btn:hover {
+            background: #e2e8f0;
+            transform: scale(1.05);
+        }
+        
+        .dislike-btn.active {
+            background: #e2e8f0;
+        }
+        
+        .favorite-btn {
+            color: #ecc94b;
+        }
+        
+        .favorite-btn:hover {
+            background: #fef5e7;
+            transform: scale(1.05);
+        }
+        
+        .favorite-btn.active {
+            color: #dd6b20;
+            background: #fef5e7;
+        }
+        
+        .count-badge {
+            font-size: 14px;
+            color: #666;
         }
         
         h1 {
@@ -49,24 +128,265 @@
             font-size: 14px;
             margin-left: 10px;
         }
+        
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .message-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+        
+        .message-error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #fc8181;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>📚 Список паттернов <span class="count">({{ patterns|length }} шт.)</span></h1>
+    <h1>📚 Каталог паттернов <span class="count">({{ patterns|length }} шт.)</span></h1>
     
     <div class="patterns-list">
-        {% for pattern in patterns %}
-            <div class="pattern-item">
-                <a href="{% url 'pattern_detail' pattern.id %}">
-                    {{ pattern.title }}
-                </a>
-                {% if pattern.term %}
-                    <span style="color: #666; font-size: 14px;">({{ pattern.term }})</span>
-                {% endif %}
+        {% for item in patterns %}
+            <div class="pattern-item" data-pattern-id="{{ item.pattern.id }}">
+                <div class="pattern-info">
+                    <a href="{% url 'pattern_detail' item.pattern.id %}">
+                        {{ item.pattern.title }}
+                    </a>
+                    {% if item.pattern.term %}
+                        <span class="pattern-term">({{ item.pattern.term }})</span>
+                    {% endif %}
+                </div>
+                <div class="pattern-actions">
+                    <button class="action-btn like-btn" onclick="toggleLike({{ item.pattern.id }})">
+                        ❤️ <span class="like-count" id="like-count-{{ item.pattern.id }}">{{ item.raitng.likes|default:0 }}</span>
+                    </button>
+                    <button class="action-btn dislike-btn" onclick="toggleDislike({{ item.pattern.id }})">
+                        👎 <span class="dislike-count" id="dislike-count-{{ item.pattern.id }}">{{ item.raitng.dislikes|default:0 }}</span>
+                    </button>
+                    <button class="action-btn favorite-btn" onclick="toggleFavorite({{ item.pattern.id }})">
+                        ⭐ <span id="favorite-icon-{{ item.pattern.id }}">☆</span>
+                    </button>
+                </div>
             </div>
         {% empty %}
             <div class="pattern-item">Паттерны не найдены</div>
         {% endfor %}
     </div>
+    
+    <div id="message-container"></div>
+    
+    <script>
+        const csrftoken = document.querySelector('[name=csrf-token]')?.content;
+        
+        // Проверка избранного при загрузке
+        async function checkFavorites() {
+            {% if user.is_authenticated %}
+            const patternIds = Array.from(document.querySelectorAll('.pattern-item')).map(
+                item => parseInt(item.dataset.patternId)
+            );
+            
+            for (let id of patternIds) {
+                try {
+                    const response = await fetch('/api/check_favorite/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrftoken
+                        },
+                        body: JSON.stringify({ pattern_id: id })
+                    });
+                    const data = await response.json();
+                    if (data.is_favorite) {
+                        const icon = document.getElementById(`favorite-icon-${id}`);
+                        if (icon) icon.textContent = '★';
+                    }
+                } catch (error) {
+                    console.error('Ошибка проверки избранного:', error);
+                }
+            }
+            {% endif %}
+        }
+        
+        async function toggleLike(patternId) {
+            if (!isAuthenticated()) {
+                showMessage('Войдите чтобы поставить лайк', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/set_like/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({ pattern_id: patternId })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Обновляем счетчик лайков
+                    const likeSpan = document.getElementById(`like-count-${patternId}`);
+                    const currentLikes = parseInt(likeSpan.textContent);
+                    const wasLiked = document.querySelector(`.like-btn[onclick*="${patternId}"]`).classList.contains('active');
+                    
+                    // Переключаем активное состояние
+                    const likeBtn = document.querySelector(`.like-btn[onclick*="${patternId}"]`);
+                    likeBtn.classList.toggle('active');
+                    
+                    // Обновляем счетчик (нужно получить актуальное значение с сервера или пересчитать)
+                    // Для простоты перезагрузим страницу или сделаем запрос на получение актуальных данных
+                    loadRatings();
+                    
+                    showMessage('Лайк обновлен', 'success');
+                } else {
+                    showMessage(data.error || 'Ошибка', 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showMessage('Ошибка при отправке запроса', 'error');
+            }
+        }
+        
+        async function toggleDislike(patternId) {
+            if (!isAuthenticated()) {
+                showMessage('Войдите чтобы поставить дизлайк', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/set_dislike/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({ pattern_id: patternId })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    loadRatings();
+                    showMessage('Дизлайк обновлен', 'success');
+                } else {
+                    showMessage(data.error || 'Ошибка', 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showMessage('Ошибка при отправке запроса', 'error');
+            }
+        }
+        
+        async function toggleFavorite(patternId) {
+            if (!isAuthenticated()) {
+                showMessage('Войдите чтобы добавить в избранное', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/set_like/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({ pattern_id: patternId })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const icon = document.getElementById(`favorite-icon-${patternId}`);
+                    if (icon.textContent === '☆') {
+                        icon.textContent = '★';
+                        showMessage('Добавлено в избранное', 'success');
+                    } else {
+                        icon.textContent = '☆';
+                        showMessage('Удалено из избранного', 'success');
+                    }
+                } else {
+                    showMessage(data.error || 'Ошибка', 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showMessage('Ошибка при отправке запроса', 'error');
+            }
+        }
+        
+        async function loadRatings() {
+            const patternIds = Array.from(document.querySelectorAll('.pattern-item')).map(
+                item => parseInt(item.dataset.patternId)
+            );
+            
+            for (let id of patternIds) {
+                try {
+                    const response = await fetch('/api/get_ratings/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrftoken
+                        },
+                        body: JSON.stringify({ pattern_id: id })
+                    });
+                    const data = await response.json();
+                    
+                    const likeSpan = document.getElementById(`like-count-${id}`);
+                    const dislikeSpan = document.getElementById(`dislike-count-${id}`);
+                    
+                    if (likeSpan) likeSpan.textContent = data.likes || 0;
+                    if (dislikeSpan) dislikeSpan.textContent = data.dislikes || 0;
+                } catch (error) {
+                    console.error('Ошибка загрузки рейтингов:', error);
+                }
+            }
+        }
+        
+        function isAuthenticated() {
+            {% if user.is_authenticated %}
+                return true;
+            {% else %}
+                return false;
+            {% endif %}
+        }
+        
+        function showMessage(message, type) {
+            const container = document.getElementById('message-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message message-${type}`;
+            messageDiv.textContent = message;
+            container.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 3000);
+        }
+        
+        // Загружаем избранное и рейтинги при загрузке
+        // checkFavorites();
+        loadRatings();
+    </script>
 </body>
 </html>

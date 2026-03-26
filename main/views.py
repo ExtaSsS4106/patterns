@@ -10,25 +10,147 @@ import logging
 from django.views.decorators.csrf import csrf_exempt
 
 # Create your views here.
+"""Рендер первой страницы"""
 def index(request):
     categories = Categories.objects.all()
     patterns = Patterns.objects.all()
     return render(request, 'test/index.html', {"categories": categories, "patterns":patterns})
-
+"""Рендер определённого каталога по названию"""
 def catalog(request, title):
     category = get_object_or_404(Categories, title=title)
     if category.title == title:
         patterns = Patterns.objects.filter(categories=category)
-        return render(request, 'test/catalog.html', {"patterns": patterns})
+        data = []
+        for pattern in patterns:
+            raitng = Ratings.objects.get(patterns=pattern)
+            data.append(
+                {
+                    "pattern": pattern,
+                    "raitng": raitng
+                }
+            )
+        return render(request, 'test/catalog.html', {"patterns": data})
     return render(request, 'test/catalog.html', {"patterns": "None"})
-
+"""Рендер страницы одного из патернов по id"""
 def pattern_detail(request, id):
     pattern = get_object_or_404(Patterns, id=id)
-    return render(request, 'test/pattern-detail.html', {"pattern": pattern})
+    raitng = Ratings.objects.get(patterns=pattern)
+    data = {
+            "pattern": pattern,
+            "raitng": raitng
+        }
+    return render(request, 'test/pattern-detail.html', data)
 
 @login_required
+def check_favorite(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    data = json.loads(request.body)
+    pattern_id = data.get('pattern_id')
+    
+    is_favorite = Favorites.objects.filter(
+        users=request.user,
+        patterns_id=pattern_id
+    ).exists()
+    
+    return JsonResponse({'is_favorite': is_favorite})
+
+
+def get_ratings(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    data = json.loads(request.body)
+    pattern_id = data.get('pattern_id')
+    
+    rating = Ratings.objects.filter(patterns_id=pattern_id).first()
+    
+    return JsonResponse({
+        'likes': rating.likes if rating and rating.likes else 0,
+        'dislikes': rating.dislikes if rating and rating.dislikes else 0
+    })
+
+"""
+    Поставить дизлайк (убрать из избранного)
+    Убрать дизлайк
+"""
+@login_required
+def set_dislike(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    profile = Profiles.objects.get(user=request.user)
+    data = json.loads(request.body)
+    pattern_id = data.get('pattern_id')
+    pattern = get_object_or_404(Patterns, id=pattern_id)
+    rating = get_object_or_404(Ratings, patterns__id=pattern_id)
+    fav = Favorites.objects.filter(users=profile, patterns=pattern).order_by('-id')
+    rat_prof, created = Rating_profiles.objects.get_or_create(profiles=profile, ratings=rating)
+    if rat_prof.status == 'dislike':
+
+        if rating.dislikes is not None and rating.dislikes > 0:
+            rating.dislikes -= 1
+            rating.save()
+            rat_prof.status = 'none'
+            rat_prof.save()
+        return JsonResponse({'status': 'ok'}, status=200)
+    elif rat_prof.status == 'like' or rat_prof.status == 'none':
+        if fav.exists():
+            fav.delete()
+        if rating.dislikes is None:
+            rating.dislikes = 1
+        else:
+            rating.dislikes += 1
+        rating.save()
+        rat_prof.status = 'dislike'
+        rat_prof.save()
+        return JsonResponse({'status': 'ok'}, status=200)
+
+"""
+    Добавить в избранное (добавить лайк)
+    Убрать лайк (убрать из избранного)    
+"""
+@login_required
+def set_like(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    profile = Profiles.objects.get(user=request.user)
+    data = json.loads(request.body)
+    pattern_id = data.get('pattern_id')
+    pattern = get_object_or_404(Patterns, id=pattern_id)
+    rating = get_object_or_404(Ratings, patterns__id=pattern_id)
+    fav = Favorites.objects.filter(users=profile, patterns=pattern).order_by('-id')
+    rat_prof, created = Rating_profiles.objects.get_or_create(profiles=profile, ratings=rating)
+    if rat_prof.status == 'like':
+        if fav.exists():
+            fav.delete()
+        if rating.likes is not None and rating.likes > 0:
+            rating.likes -= 1
+            rating.save()
+            rat_prof.status = 'none'
+            rat_prof.save()
+        return JsonResponse({'status': 'ok'}, status=200)
+    elif rat_prof.status == 'dislike' or rat_prof.status == 'none':
+        fav.create(
+            users=profile,
+            patterns=pattern
+        )
+        if rating.likes is None:
+            rating.likes = 1
+        else:
+            rating.likes += 1
+        rating.save()
+        rat_prof.status = 'like'
+        rat_prof.save()
+        return JsonResponse({'status': 'ok'}, status=200)
+    
+
+"""API для добавления комментария"""
+@login_required
 def add_comment(request):
-    """API для добавления комментария"""
+    
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     
@@ -60,10 +182,9 @@ def add_comment(request):
         print(e)
         return JsonResponse({'error': str(e)}, status=400)
 
-
+"""API для вывода комментариев"""
 @csrf_exempt
 def select_comments(request):
-    """API для получения комментариев"""
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     
@@ -87,7 +208,8 @@ def select_comments(request):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
-
+    
+"""Рендер профиля авторизованного пользователя"""
 @login_required
 def profile(request):
     user = request.user
@@ -100,6 +222,7 @@ def profile(request):
         patterns = [f.patterns for f in fav]
     return render(request, 'test/account.html', {"patterns": patterns})
 
+"""API для удаления паттерна по id"""
 @login_required
 @csrf_exempt
 def delete_pattern_api(request, id):
@@ -110,14 +233,12 @@ def delete_pattern_api(request, id):
         user = request.user
         auth_user = User.objects.get(id=user.id)
         
-        # Проверяем права доступа
         if not auth_user.is_superuser:
             return JsonResponse({'error': 'Доступ запрещен'}, status=403)
         
         pattern = get_object_or_404(Patterns, id=id)
         title = pattern.title
         
-        # Удаляем паттерн
         pattern.delete()
         
         return JsonResponse({
@@ -127,7 +248,8 @@ def delete_pattern_api(request, id):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
-
+    
+"""Рендер эдитера либо пустого либо если есть id редактор существующего"""
 @login_required
 def editor(request, id=None):
     user = request.user
@@ -160,10 +282,11 @@ def editor(request, id=None):
     
     return render(request, 'test/editor.html', context)
 
+"""API для создания тега"""
 @login_required
 @csrf_exempt
 def create_tag_api(request):
-    """API для создания тега"""
+    
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     
@@ -186,10 +309,10 @@ def create_tag_api(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
+"""API для создания стека"""
 @login_required
 @csrf_exempt
 def create_stack_api(request):
-    """API для создания стека"""
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     
@@ -212,10 +335,10 @@ def create_stack_api(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
+"""API для создания категории"""
 @login_required
 @csrf_exempt
 def create_category_api(request):
-    """API для создания категории"""
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     
@@ -238,10 +361,11 @@ def create_category_api(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
+"""API для создания паттерна"""
 @login_required
 @csrf_exempt
 def create_pattern_api(request):
-    """API для создания паттерна"""
+    
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     
@@ -266,6 +390,9 @@ def create_pattern_api(request):
         if stack_ids:
             pattern.stacks.set(stack_ids)
         
+        Ratings.objects.update_or_create(patterns=pattern)
+        Logs.objects.update_or_create(patterns=pattern)
+        
         return JsonResponse({
             'success': True,
             'message': f'Паттерн "{pattern.title}" успешно создан!',
@@ -275,10 +402,11 @@ def create_pattern_api(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
+"""API для обновления паттерна"""
 @login_required
 @csrf_exempt
 def update_pattern_api(request, id):
-    """API для обновления паттерна"""
+    
     if request.method != 'PUT' and request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     
@@ -310,6 +438,8 @@ def update_pattern_api(request, id):
         else:
             pattern.stacks.clear()
         
+        Ratings.objects.update_or_create(patterns=pattern)
+        Logs.objects.update_or_create(patterns=pattern)
         return JsonResponse({
             'success': True,
             'message': f'Паттерн "{pattern.title}" успешно обновлен!',
@@ -319,11 +449,14 @@ def update_pattern_api(request, id):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
+
+"""Выход из аккаунта"""
 @login_required(login_url='/login')
 def logout_view(request):
     logout(request)
     return redirect('/')
 
+"""Регистрация"""
 def sign_up(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
