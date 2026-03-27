@@ -13,7 +13,7 @@
         
         <div class="profile-stats">
             <div class="stat-item">
-                <div class="stat-number">{{ patterns_usr|length }}</div>
+                <div class="stat-number">{{ patterns|length }}</div>
                 <div class="stat-label">
                     {% if user.is_superuser %}Всего паттернов{% else %}В избранном{% endif %}
                 </div>
@@ -26,17 +26,24 @@
     </div>
     
     <div class="favorites-section">
-        <h2 class="section-title">
+        <div class="section-header">
+            <h2 class="section-title">
+                {% if user.is_superuser %}
+                    📚 Все паттерны
+                {% else %}
+                    ⭐ Избранные паттерны
+                {% endif %}
+            </h2>
             {% if user.is_superuser %}
-                📚 Все паттерны
-            {% else %}
-                ⭐ Избранные паттерны
+                <a href="{% url 'editor' %}" class="add-pattern-btn">
+                    ➕ Добавить паттерн
+                </a>
             {% endif %}
-        </h2>
+        </div>
         
-        {% if patterns_usr %}
+        {% if patterns %}
             <div class="favorites-grid">
-                {% for pattern in patterns_usr %}
+                {% for pattern in patterns %}
                     <div class="favorite-card" data-id="{{ pattern.id }}">
                         <div class="favorite-header">
                             <h3>{{ pattern.title }}</h3>
@@ -147,13 +154,43 @@
         border-radius: 12px;
     }
     
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    
     .section-title {
         font-size: 24px;
         color: #B47C2E;
-        margin-bottom: 25px;
         padding-bottom: 10px;
         border-bottom: 2px solid #FED361;
         display: inline-block;
+        margin: 0;
+    }
+    
+    .add-pattern-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        background: #FED361;
+        color: #333;
+        text-decoration: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .add-pattern-btn:hover {
+        background: #e5b840;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
     }
     
     .favorites-grid {
@@ -203,6 +240,9 @@
         padding: 5px 8px;
         border-radius: 6px;
         transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
     }
     
     .edit-btn:hover {
@@ -309,6 +349,16 @@
         
         .favorites-grid {
             grid-template-columns: 1fr;
+        }
+        
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .add-pattern-btn {
+            width: 100%;
+            justify-content: center;
         }
     }
 </style>
