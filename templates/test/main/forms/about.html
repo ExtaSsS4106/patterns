@@ -1,0 +1,267 @@
+{% extends "test/main/index.html" %}
+{% load static %}
+
+{% block content %}
+<div class="intro-article">
+    <div class="article-header">
+        <h1>Что такое паттерны проектирования?</h1>
+    </div>
+    
+    <div class="article-content">
+        <section>
+            <h2>📖 Определение</h2>
+            <p>
+                Паттерны проектирования (Design Patterns) — это типовые решения часто встречающихся проблем 
+                в объектно-ориентированном программировании. Это не готовый код, а описание подхода к решению 
+                задачи, который можно адаптировать под конкретную ситуацию.
+            </p>
+            <p>
+                Паттерны помогают разработчикам создавать более гибкий, масштабируемый и поддерживаемый код. 
+                Они основаны на опыте ведущих разработчиков и проверены временем.
+            </p>
+        </section>
+
+        <section>
+            <h2>🎯 Зачем нужны паттерны?</h2>
+            <ul>
+                <li><strong>Ускоряют разработку</strong> — не нужно изобретать велосипед, используйте готовые решения</li>
+                <li><strong>Улучшают коммуникацию</strong> — разработчики понимают друг друга, используя общую терминологию</li>
+                <li><strong>Повышают качество кода</strong> — проверенные временем решения обеспечивают надежность</li>
+                <li><strong>Облегчают поддержку</strong> — код становится более структурированным и понятным</li>
+                <li><strong>Способствуют переиспользованию</strong> — решения можно применять в разных проектах</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>🏗️ Классификация паттернов</h2>
+            <div class="classification-grid">
+                <div class="class-card">
+                    <h3>🔨 Порождающие</h3>
+                    <p>Отвечают за создание объектов, делая систему независимой от способа их создания.</p>
+                    <div class="examples">
+                        Примеры: Singleton, Factory Method, Builder, Prototype, Abstract Factory
+                    </div>
+                </div>
+                
+                <div class="class-card">
+                    <h3>🏛️ Структурные</h3>
+                    <p>Определяют структуру классов и объектов, помогая строить сложные иерархии.</p>
+                    <div class="examples">
+                        Примеры: Adapter, Decorator, Facade, Proxy, Composite
+                    </div>
+                </div>
+                
+                <div class="class-card">
+                    <h3>🔄 Поведенческие</h3>
+                    <p>Описывают взаимодействие между объектами и распределение обязанностей.</p>
+                    <div class="examples">
+                        Примеры: Observer, Strategy, Command, State, Iterator
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>💡 Пример использования</h2>
+            <p>
+                Представьте, что вы разрабатываете приложение для доставки еды. Вам нужно создавать разные типы 
+                заказов: обычный, срочный, с особыми пожеланиями. Вместо того чтобы писать сложные конструкторы 
+                с множеством параметров, можно использовать паттерн <strong>Строитель (Builder)</strong>, который 
+                позволит гибко создавать объекты заказов пошагово.
+            </p>
+            <p>
+                Или представьте систему уведомлений: когда заказ меняет статус, нужно оповестить пользователя, 
+                курьера и ресторан. Паттерн <strong>Наблюдатель (Observer)</strong> поможет организовать эту 
+                систему, не связывая все компоненты жесткими зависимостями.
+            </p>
+        </section>
+
+        <section>
+            <h2>⚠️ Важные замечания</h2>
+            <ul>
+                <li><strong>Не панацея</strong> — паттерны не подходят для всех ситуаций, используйте их осознанно</li>
+                <li><strong>Не усложняйте</strong> — не стоит использовать паттерн там, где можно обойтись простым решением</li>
+                <li><strong>Учитывайте контекст</strong> — паттерн нужно адаптировать под конкретную задачу</li>
+                <li><strong>Изучайте анти-паттерны</strong> — знание ошибок помогает их избегать</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>📚 Рекомендуемая литература</h2>
+            <ul>
+                <li>"Design Patterns: Elements of Reusable Object-Oriented Software" — Эрих Гамма, Ричард Хелм, Ральф Джонсон, Джон Влиссидес (Банда Четырех)</li>
+                <li>"Head First Design Patterns" — Эрик Фримен, Элизабет Фримен</li>
+                <li>"Patterns of Enterprise Application Architecture" — Мартин Фаулер</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>🚀 Как начать?</h2>
+            <p>
+                Начните с изучения базовых паттернов: <strong>Singleton</strong>, <strong>Factory Method</strong>, 
+                <strong>Observer</strong> и <strong>Strategy</strong>. Они наиболее часто используются в реальных 
+                проектах. Постепенно переходите к более сложным паттернам и пробуйте применять их в своих проектах.
+            </p>
+            <p>
+                Практика — ключ к пониманию. Попробуйте реализовать простой проект, используя один из паттернов, 
+                и вы увидите, насколько проще становится код!
+            </p>
+        </section>
+    </div>
+    
+    <div class="back-link">
+        <a href="{% url 'index' %}" class="back-btn">← Вернуться на главную</a>
+    </div>
+</div>
+
+<style>
+    .intro-article {
+        max-width: 100%;
+    }
+    
+    .article-header h1 {
+        font-size: 36px;
+        color: #B47C2E;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #FED361;
+        display: inline-block;
+    }
+    
+    .article-content section {
+        margin-bottom: 40px;
+    }
+    
+    .article-content h2 {
+        font-size: 28px;
+        color: #B47C2E;
+        margin-bottom: 20px;
+    }
+    
+    .article-content p {
+        font-size: 16px;
+        line-height: 1.6;
+        color: #444;
+        margin-bottom: 16px;
+    }
+    
+    .article-content ul {
+        list-style: none;
+        padding-left: 0;
+    }
+    
+    .article-content li {
+        font-size: 16px;
+        line-height: 1.6;
+        color: #444;
+        margin-bottom: 12px;
+        padding-left: 28px;
+        position: relative;
+    }
+    
+    .article-content li::before {
+        content: "✓";
+        color: #FED361;
+        font-weight: bold;
+        position: absolute;
+        left: 0;
+        font-size: 18px;
+    }
+    
+    .classification-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+        margin-top: 20px;
+    }
+    
+    .class-card {
+        background: #FFE9C2;
+        border-radius: 12px;
+        padding: 24px;
+        transition: all 0.3s ease;
+        border: 1px solid #f0d8a8;
+    }
+    
+    .class-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .class-card h3 {
+        font-size: 22px;
+        color: #B47C2E;
+        margin-bottom: 12px;
+    }
+    
+    .class-card p {
+        font-size: 15px;
+        color: #555;
+        margin-bottom: 12px;
+    }
+    
+    .class-card .examples {
+        font-size: 13px;
+        color: #888;
+        font-style: italic;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #f0d8a8;
+    }
+    
+    .back-link {
+        margin-top: 40px;
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .back-btn {
+        display: inline-block;
+        padding: 10px 24px;
+        background: #FED361;
+        color: #333;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .back-btn:hover {
+        background: #e5b840;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+    }
+    
+    @media (max-width: 768px) {
+        .article-header h1 {
+            font-size: 28px;
+        }
+        
+        .article-content h2 {
+            font-size: 24px;
+        }
+        
+        .article-content p,
+        .article-content li {
+            font-size: 15px;
+        }
+        
+        .classification-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .back-link {
+            flex-direction: column;
+        }
+        
+        .back-btn {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}

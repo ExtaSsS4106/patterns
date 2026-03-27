@@ -4,6 +4,31 @@
 {% block content %}
 <div class="article-header">
     <h1>{{ pattern.title }}</h1>
+    <div class="pattern-meta">
+        {% if pattern.categories %}
+        <span class="meta-category">
+            📁 {{ pattern.categories.title }}
+        </span>
+        {% endif %}
+        
+        {% if pattern.tags.all %}
+        <div class="meta-tags">
+            🏷️ 
+            {% for tag in pattern.tags.all %}
+            <span class="tag">{{ tag.name }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        {% if pattern.stacks.all %}
+        <div class="meta-stacks">
+            💻 
+            {% for stack in pattern.stacks.all %}
+            <span class="stack">{{ stack.name }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
 </div>
 
 <div class="article-content">
@@ -60,8 +85,6 @@
         <div id="comments-list" class="comments-list">
             <div class="loading-comments">Загрузка комментариев...</div>
         </div>
-        
-
     </div>
 </div>
 
@@ -256,10 +279,47 @@
     .article-header h1 {
         font-size: 32px;
         color: #B47C2E;
-        margin-bottom: 30px;
+        margin-bottom: 20px;
         padding-bottom: 15px;
         border-bottom: 3px solid #FED361;
         display: inline-block;
+    }
+    
+    .pattern-meta {
+        margin: 20px 0 30px 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        align-items: center;
+    }
+    
+    .meta-category {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: #a8a8a879;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #333;
+    }
+    
+    .meta-categories .meta-tags, .meta-stacks {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    
+    .tag, .stack {
+        display: inline-block;
+        background: #FFE9C2;
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-size: 12px;
+        color: #B47C2E;
+        border: 1px solid #f0d8a8;
     }
     
     .article-content section {
@@ -404,6 +464,7 @@
         padding: 20px;
         background: #FFE9C2;
         border-radius: 8px;
+        margin-bottom: 20px;
     }
     
     .login-to-comment a {
@@ -414,6 +475,14 @@
     
     .login-to-comment a:hover {
         text-decoration: underline;
+    }
+    
+    @media (max-width: 768px) {
+        .pattern-meta {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
     }
 </style>
 {% endblock %}

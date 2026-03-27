@@ -13,17 +13,15 @@
             <div class="header-content">
                 <div class="logo-area">
                     <img src="{% static 'images/logo.png' %}" alt="Logo" class="logo" onerror="this.style.display='none'">
-                    <h1>Pattern hub</h1>
+                    <h1 class="Logo-title">Pattern hub</h1>
                 </div>
                 <div class="auth-buttons">
                     {% if user.is_authenticated %}
                         <div class="user-info">
-                            <span class="username">{{ user.username }}</span>
-                            <a href="{% url 'logout' %}" class="auth-btn logout">Выйти</a>
+                            <span onclick="window.location = '/profile';" class="username">{{ user.username }}</span>
                         </div>
                     {% else %}
-                        <a href="{% url 'sign_up' %}" class="auth-btn register">Зарегистрироваться</a>
-                        <a href="{% url 'login' %}" class="auth-btn login">Войти</a>
+                        <a href="{% url 'login_' %}" class="auth-btn register">Зарегистрироваться\Войти</a>
                     {% endif %}
                 </div>
             </div>
@@ -56,23 +54,15 @@
                         </ul>
                     </div>
                     {% endfor %}
-
-                    {% if user.is_authenticated %}
-                    <div class="nav-item">
-                        <a href="{% url 'profile' %}" class="nav-header no-arrow">
-                            <span class="nav-title">⭐ Избранное</span>
-                        </a>
-                    </div>
-                    {% endif %}
-
-                    {% if user.is_authenticated and user.is_superuser %}
-                    <div class="nav-item">
-                        <a href="{% url 'editor' %}" class="nav-header no-arrow">
-                            <span class="nav-title">✏️ Редактировать</span>
-                        </a>
-                    </div>
-                    {% endif %}
                 </nav>
+                
+                {% if user.is_authenticated %}
+                <div class="sidebar-footer">
+                    <a href="{% url 'logout' %}" class="logout-sidebar-btn">
+                        Выйти
+                    </a>
+                </div>
+                {% endif %}
             </aside>
 
             <main class="content">
@@ -83,6 +73,45 @@
     </div>
 
     <style>
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+
+        }
+        
+        .sidebar-nav {
+            flex: 1;
+        }
+        
+        .sidebar-footer {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #f0d8a8;
+        }
+        
+        .logout-sidebar-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: #030303a8;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .logout-sidebar-btn:hover {
+            background: #1a1a1a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
         .view-all {
             margin-top: 8px;
             padding-top: 5px;
@@ -107,19 +136,29 @@
         }
         
         .username {
-            color: white;
+            color: black;
+            font-size: 15px;
             padding: 8px 15px;
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.55);
             border-radius: 5px;
             font-weight: bold;
+            cursor: pointer;
         }
         
         .auth-btn.logout {
-            background: #dc3545;
+            font-size: 15px;
+            color: white;
+            background: #0303037e;
         }
         
         .auth-btn.logout:hover {
-            background: #c82333;
+            background: #141414;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                height: auto;
+            }
         }
     </style>
 

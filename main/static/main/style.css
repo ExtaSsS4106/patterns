@@ -44,8 +44,12 @@ body {
     border-radius: 13px;
     padding: 8px;
 }
-
-.header h1 {
+.Logo-title{
+    color: #000;
+    font-size: 40px;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.header {
     color: white;
     font-size: 24px;
     font-weight: 600;
@@ -70,18 +74,19 @@ body {
 
 .auth-btn.register {
     background: transparent;
-    color: white;
-    border: 1px solid white;
+    color: #000;
+    border: 1px solid rgb(0, 0, 0);
 }
 
 .auth-btn.register:hover {
-    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    background: rgb(0, 0, 0);
     transform: translateY(-2px);
 }
 
 .auth-btn.login {
     background: white;
-    color: #FED361;
+    color: #000000;
     border: none;
 }
 
@@ -133,12 +138,14 @@ body {
 }
 
 .nav-header:hover .nav-title {
-    color: #B47C2E;
+    font-weight: 700;
+    color: #111111;
+    
 }
 
 .nav-title {
     font-size: 18px;
-    font-weight: 700;
+    font-weight: 70;
     color: #333;
     transition: color 0.3s ease;
 }
@@ -195,7 +202,8 @@ body {
 }
 
 .nav-header.no-arrow:hover .nav-title {
-    color: #B47C2E;
+    font-weight: 700;
+    color: #111111;
 }
 
 /* Основная область */
@@ -256,7 +264,7 @@ body {
 
 .pattern-card.square {
     width: 260px;
-    height: 260px;
+    height: 146px;
     background: #e0e0e0;
     border-radius: 12px;
     padding: 28px;

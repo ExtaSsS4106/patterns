@@ -8,6 +8,7 @@ urlpatterns = [
     path('editor/', views.editor, name='editor'),
     path('editor/<int:id>/', views.editor, name='editor_edit'),
     path('profile/', views.profile, name='profile'),
+    path('about/', views.about, name='about'),
     
     # API для комментариев
     path('add_comment/', views.add_comment, name='add_comment'),
@@ -27,4 +28,5 @@ urlpatterns = [
     
     path('sign-up/', views.sign_up, name='sign_up'),
     path('logout/', views.logout_view, name='logout'),
+    path('login_/', views.login, name='login_'),
 ]

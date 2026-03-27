@@ -15,6 +15,12 @@ def index(request):
     categories = Categories.objects.all()
     patterns = Patterns.objects.all()
     return render(request, 'test/main/forms/home_content.html', {"categories": categories, "patterns":patterns})
+
+def about(request):
+    categories = Categories.objects.all()
+    patterns = Patterns.objects.all()
+    return render(request, 'test/main/forms/about.html', {"categories": categories, "patterns":patterns})
+
 """Рендер определённого каталога по названию"""
 def catalog(request, title):
     categories = Categories.objects.all()
@@ -294,14 +300,44 @@ def delete_pattern_api(request, id):
         pattern = get_object_or_404(Patterns, id=id)
         title = pattern.title
         
-        pattern.delete()
+        # Удаляем связанные данные в правильном порядке
+        try:
+            # Удаляем из избранного
+            Favorites.objects.filter(patterns=pattern).delete()
+            
+            # Удаляем рейтинги пользователей
+            Rating_profiles.objects.filter(ratings__patterns=pattern).delete()
+            
+            # Удаляем рейтинг
+            Ratings.objects.filter(patterns=pattern).delete()
+            
+            # Удаляем комментарии
+            Comments.objects.filter(patterns=pattern).delete()
+            
+            # Удаляем логи
+            Logs.objects.filter(patterns=pattern).delete()
+            
+            # Удаляем связи с тегами и стеками (ManyToMany удаляются автоматически)
+            pattern.tags.clear()
+            pattern.stacks.clear()
+            
+            # Удаляем сам паттерн
+            pattern.delete()
+            
+        except Exception as e:
+            print(f"Ошибка при удалении связанных данных: {e}")
+            # Пробуем удалить только паттерн, если не удалось удалить связанные данные
+            pattern.delete()
         
         return JsonResponse({
             'success': True,
             'message': f'Паттерн "{title}" успешно удален'
         })
         
+    except Patterns.DoesNotExist:
+        return JsonResponse({'error': 'Паттерн не найден'}, status=404)
     except Exception as e:
+        print(f"Ошибка при удалении: {e}")
         return JsonResponse({'error': str(e)}, status=400)
     
 """Рендер эдитера либо пустого либо если есть id редактор существующего"""
@@ -511,6 +547,11 @@ def update_pattern_api(request, id):
 @login_required(login_url='/login')
 def logout_view(request):
     logout(request)
+    return redirect('/')
+
+@login_required(login_url='/sign-up')
+def login(request):
+    login(request, request.user)
     return redirect('/')
 
 """Регистрация"""

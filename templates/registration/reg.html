@@ -22,11 +22,11 @@
         }
 
         .register-container {
-            background: #D4B667;
-            border-radius: 16px;
-            padding: 40px 32px;
+            background: #FED361;
+            border-radius: 24px;
+            padding: 40px 36px;
             width: 100%;
-            max-width: 400px;
+            max-width: 440px;
             margin: 20px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         }
@@ -35,14 +35,50 @@
             text-align: center;
             font-size: 28px;
             font-weight: 600;
-            color: #333;
+            color: #1a1a1a;
+            margin-bottom: 24px;
+        }
+
+        .login-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
             margin-bottom: 32px;
+            padding: 10px 16px;
+            border: 1.5px solid #ffffff;
+            border-radius: 60px;
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        .login-box span {
+            font-size: 14px;
+            color: #1a1a1a;
+        }
+
+        .login-btn {
+            background: #e0e0e0;
+            color: #1a1a1a;
+            border: none;
+            border-radius: 40px;
+            padding: 6px 18px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .login-btn:hover {
+            background: #c0c0c0;
+            transform: translateY(-1px);
         }
 
         .register-form {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 16px;
         }
 
         .input-group {
@@ -51,69 +87,49 @@
 
         .input-field {
             width: 100%;
-            padding: 14px 16px;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            outline: none;
+            padding: 14px 18px;
             background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s ease;
         }
 
         .input-field:focus {
-            border-color: #D4B667;
-            box-shadow: 0 0 0 3px rgba(212, 182, 103, 0.2);
+            border-color: #FF8C42;
+            box-shadow: 0 0 0 3px rgba(255, 140, 66, 0.2);
         }
 
         .input-field::placeholder {
-            color: #999;
+            color: #adb5bd;
         }
 
-        .register-btn {
-            width: 100%;
-            padding: 14px;
+        .register-submit-btn {
             background: white;
-            color: #333;
-            border: 2px solid #D4B667;
-            border-radius: 8px;
+            color: #1a1a1a;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 14px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
             margin-top: 8px;
+            transition: all 0.3s ease;
+            width: 100%;
         }
 
-        .register-btn:hover {
-            background: #D4B667;
-            color: white;
+        .register-submit-btn:hover {
+            background: #f5f5f5;
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(212, 182, 103, 0.3);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .error {
             color: #dc2626;
             font-size: 14px;
-            margin-top: 5px;
-            text-align: left;
-        }
-
-        .login-link {
             text-align: center;
-            margin-top: 20px;
-            font-size: 14px;
-            color: #666;
-        }
-
-        .login-link a {
-            color: #D4B667;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .login-link a:hover {
-            text-decoration: underline;
-            color: #B47C2E;
+            margin-top: 5px;
         }
 
         @media (max-width: 480px) {
@@ -123,11 +139,12 @@
             
             .register-container h1 {
                 font-size: 24px;
-                margin-bottom: 24px;
             }
             
-            .input-field {
-                padding: 12px 14px;
+            .login-box {
+                flex-direction: column;
+                gap: 10px;
+                padding: 12px 16px;
             }
         }
     </style>
@@ -135,6 +152,11 @@
 <body>
     <div class="register-container">
         <h1>Регистрация</h1>
+        
+        <div class="login-box">
+            <span>🤔 Уже есть аккаунт?</span>
+            <a href="{% url 'login' %}" class="login-btn">Войти</a>
+        </div>
 
         <form class="register-form" method="post" action="{% url 'sign_up' %}">
             {% csrf_token %}
@@ -167,13 +189,8 @@
                 {% endif %}
             </div>
 
-            <button type="submit" class="register-btn">Зарегистрироваться</button>
+            <button type="submit" class="register-submit-btn">Зарегистрироваться</button>
         </form>
-
-        <div class="login-link">
-            <span>Уже есть аккаунт? </span>
-            <a href="{% url 'login' %}">Войти</a>
-        </div>
     </div>
 </body>
 </html>
