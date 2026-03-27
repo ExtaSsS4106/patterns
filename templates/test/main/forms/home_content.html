@@ -1,0 +1,27 @@
+{% extends "test/main/index.html" %}
+{% load static %}
+
+{% block content %}
+<div class="intro-block">
+    <h2>Введение в паттерны</h2>
+    <div class="intro-section">
+        <h3>Паттерны</h3>
+        <p>Что это?</p>
+        <a href="#" class="details-link gold">Подробнее</a>
+    </div>
+</div>
+
+<div class="patterns-block">
+    <h2>Паттерны</h2>
+
+    <div class="patterns-grid">
+        {% for category in categories %}
+        <div class="pattern-card square">
+            <h3>{{ category.title }}</h3>
+
+            <a href="{% url 'catalog' category.title %}" class="details-link gold-dark">Подробнее</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

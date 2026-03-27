@@ -1,0 +1,775 @@
+{% extends "test/main/index.html" %}
+{% load static %}
+
+{% block content %}
+<div class="editor-container">
+    <div class="editor-card">
+        <h1 class="editor-title">
+            {% if pattern %}✏️ Редактирование: {{ pattern.title }}{% else %}➕ Создание нового паттерна{% endif %}
+        </h1>
+        <div id="message-container"></div>
+        
+        <form id="pattern-form">
+            {% csrf_token %}
+            
+            <!-- Заголовок -->
+            <div class="form-group">
+                <label for="title">Заголовок *</label>
+                <input type="text" id="title" name="title" class="form-input" required placeholder="Singleton" value="{{ pattern.title|default:'' }}">
+            </div>
+            
+            <!-- Категория -->
+            <div class="form-group">
+                <label>Категория *</label>
+                <div class="dynamic-input-group">
+                    <div class="input-with-button">
+                        <input type="text" id="new-category-input" class="form-input" placeholder="Новая категория..." onkeypress="handleCategoryEnter(event)">
+                        <button type="button" class="btn-add" onclick="addNewCategory()">➕ Добавить</button>
+                    </div>
+                    <div class="existing-items">
+                        <div class="existing-items-title">📁 Выберите существующую:</div>
+                        <div id="categories-list" class="items-chips">
+                            {% for cat in categories %}
+                                <span class="existing-item" data-id="{{ cat.id }}" data-name="{{ cat.title }}" onclick="selectCategory(this)">{{ cat.title }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <input type="hidden" id="category-id" name="category" value="{{ pattern.categories.id|default:'' }}" required>
+                    <div id="selected-category" class="selected-items"></div>
+                </div>
+            </div>
+            
+            <!-- Теги -->
+            <div class="form-group">
+                <label>Теги</label>
+                <div class="dynamic-input-group">
+                    <div class="input-with-button">
+                        <input type="text" id="new-tag-input" class="form-input" placeholder="Новый тег..." onkeypress="handleTagEnter(event)">
+                        <button type="button" class="btn-add" onclick="addNewTag()">➕ Добавить</button>
+                    </div>
+                    <div class="existing-items">
+                        <div class="existing-items-title">🏷️ Выберите существующие:</div>
+                        <div id="tags-list" class="items-chips">
+                            {% for tag in tags %}
+                                <span class="existing-item" data-id="{{ tag.id }}" data-name="{{ tag.name }}" 
+                                      {% if tag.id in selected_tag_ids %}class="existing-item selected"{% else %}class="existing-item"{% endif %}
+                                      onclick="toggleTag(this)">{{ tag.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <input type="hidden" id="tags-ids" name="tags" value="{{ selected_tag_ids|join:',' }}">
+                    <div id="selected-tags" class="selected-items"></div>
+                </div>
+            </div>
+            
+            <!-- Стеки -->
+            <div class="form-group">
+                <label>Стек технологий</label>
+                <div class="dynamic-input-group">
+                    <div class="input-with-button">
+                        <input type="text" id="new-stack-input" class="form-input" placeholder="Новый стек..." onkeypress="handleStackEnter(event)">
+                        <button type="button" class="btn-add" onclick="addNewStack()">➕ Добавить</button>
+                    </div>
+                    <div class="existing-items">
+                        <div class="existing-items-title">📚 Выберите существующие:</div>
+                        <div id="stacks-list" class="items-chips">
+                            {% for stack in stacks %}
+                                <span class="existing-item" data-id="{{ stack.id }}" data-name="{{ stack.name }}" 
+                                      {% if stack.id in selected_stack_ids %}class="existing-item selected"{% else %}class="existing-item"{% endif %}
+                                      onclick="toggleStack(this)">{{ stack.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <input type="hidden" id="stacks-ids" name="stacks" value="{{ selected_stack_ids|join:',' }}">
+                    <div id="selected-stacks" class="selected-items"></div>
+                </div>
+            </div>
+            
+            <!-- Термин -->
+            <div class="form-group">
+                <label for="term">Термин (русский)</label>
+                <input type="text" id="term" name="term" class="form-input" placeholder="Одиночка" value="{{ pattern.term|default:'' }}">
+            </div>
+            
+            <!-- Проблема -->
+            <div class="form-group">
+                <label for="problem">Проблема</label>
+                <textarea id="problem" name="problem" class="form-textarea" rows="5" placeholder="Опишите проблему...">{{ pattern.problem|default:'' }}</textarea>
+            </div>
+            
+            <!-- Решение -->
+            <div class="form-group">
+                <label for="solution">Решение</label>
+                <textarea id="solution" name="solution" class="form-textarea" rows="5" placeholder="Опишите решение...">{{ pattern.solution|default:'' }}</textarea>
+            </div>
+            
+            <!-- Примеры -->
+            <div class="form-group">
+                <label for="examples">Примеры</label>
+                <textarea id="examples" name="examples" class="form-textarea" rows="5" placeholder="Примеры использования...">{{ pattern.examples|default:'' }}</textarea>
+            </div>
+            
+            <!-- Заключение -->
+            <div class="form-group">
+                <label for="consclusions">Заключение</label>
+                <textarea id="consclusions" name="consclusions" class="form-textarea" rows="3" placeholder="Выводы...">{{ pattern.consclusions|default:'' }}</textarea>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn-save">💾 Сохранить</button>
+                <button type="button" class="btn-cancel" onclick="window.location.href='{% url 'index' %}'">Отмена</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .editor-container {
+        max-width: 100%;
+    }
+    
+    .editor-card {
+        background: #FFE9C2;
+        border-radius: 12px;
+        padding: 30px;
+        border: 1px solid #f0d8a8;
+    }
+    
+    .editor-title {
+        font-size: 28px;
+        color: #B47C2E;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #FED361;
+    }
+    
+    .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #B47C2E;
+    }
+    
+    .form-input, .form-textarea {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid #f0d8a8;
+        border-radius: 8px;
+        font-size: 15px;
+        font-family: inherit;
+        background: white;
+        transition: all 0.3s ease;
+    }
+    
+    .form-input:focus, .form-textarea:focus {
+        outline: none;
+        border-color: #FED361;
+        box-shadow: 0 0 0 3px rgba(254, 211, 97, 0.2);
+    }
+    
+    .form-textarea {
+        resize: vertical;
+    }
+    
+    .dynamic-input-group {
+        border: 1px solid #f0d8a8;
+        border-radius: 8px;
+        padding: 15px;
+        background: white;
+    }
+    
+    .input-with-button {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .input-with-button .form-input {
+        flex: 1;
+        margin-bottom: 0;
+    }
+    
+    .btn-add {
+        padding: 12px 20px;
+        background: #FED361;
+        color: #333;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-add:hover {
+        background: #e5b840;
+        transform: translateY(-1px);
+    }
+    
+    .existing-items {
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px dashed #f0d8a8;
+    }
+    
+    .existing-items-title {
+        font-size: 13px;
+        color: #666;
+        margin-bottom: 10px;
+    }
+    
+    .items-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .existing-item {
+        display: inline-block;
+        background: #FFE9C2;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 1px solid #f0d8a8;
+    }
+    
+    .existing-item:hover {
+        background: #FED361;
+        transform: scale(1.05);
+    }
+    
+    .existing-item.selected {
+        background: #FED361;
+        border-color: #B47C2E;
+        color: #B47C2E;
+        font-weight: bold;
+    }
+    
+    .selected-items {
+        margin-top: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .item-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #FED361;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 500;
+    }
+    
+    .item-chip .remove {
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 14px;
+        color: #666;
+        transition: all 0.2s ease;
+    }
+    
+    .item-chip .remove:hover {
+        color: #dc3545;
+        transform: scale(1.1);
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #f0d8a8;
+    }
+    
+    .btn-save {
+        padding: 12px 30px;
+        background: #FED361;
+        color: #333;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .btn-save:hover {
+        background: #e5b840;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+    }
+    
+    .btn-cancel {
+        padding: 12px 30px;
+        background: #e0e0e0;
+        color: #666;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-cancel:hover {
+        background: #c0c0c0;
+        transform: translateY(-2px);
+    }
+    
+    .message {
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .message-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .message-error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    
+    .message-info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+    }
+    
+    @media (max-width: 768px) {
+        .editor-card {
+            padding: 20px;
+        }
+        
+        .editor-title {
+            font-size: 24px;
+        }
+        
+        .input-with-button {
+            flex-direction: column;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .btn-save, .btn-cancel {
+            width: 100%;
+        }
+    }
+</style>
+
+<script>
+    const isEditing = {{ pattern.id|default:'null' }} !== null;
+    const patternId = {{ pattern.id|default:'null' }};
+    
+    let selectedCategory = { id: {{ pattern.categories.id|default:'null' }}, name: '{{ pattern.categories.title|default:''|escapejs }}' };
+    let selectedTags = [];
+    let selectedStacks = [];
+    
+    // Создаем URL только если это редактирование
+    let updatePatternUrl = null;
+    {% if pattern %}
+    updatePatternUrl = '{% url "update_pattern_api" pattern.id %}';
+    {% endif %}
+    
+    const API_URLS = {
+        createTag: '{% url "create_tag_api" %}',
+        createStack: '{% url "create_stack_api" %}',
+        createCategory: '{% url "create_category_api" %}',
+        createPattern: '{% url "create_pattern_api" %}',
+        updatePattern: updatePatternUrl
+    };
+    
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    function initSelectedItems() {
+        const tagIds = document.getElementById('tags-ids').value;
+        if (tagIds) {
+            const ids = tagIds.split(',').map(Number).filter(id => id);
+            ids.forEach(id => {
+                const tagElement = document.querySelector(`#tags-list .existing-item[data-id="${id}"]`);
+                if (tagElement) {
+                    selectedTags.push({ id: id, name: tagElement.dataset.name });
+                    tagElement.classList.add('selected');
+                }
+            });
+        }
+        
+        const stackIds = document.getElementById('stacks-ids').value;
+        if (stackIds) {
+            const ids = stackIds.split(',').map(Number).filter(id => id);
+            ids.forEach(id => {
+                const stackElement = document.querySelector(`#stacks-list .existing-item[data-id="${id}"]`);
+                if (stackElement) {
+                    selectedStacks.push({ id: id, name: stackElement.dataset.name });
+                    stackElement.classList.add('selected');
+                }
+            });
+        }
+        
+        if (selectedCategory.id) {
+            const categoryElement = document.querySelector(`#categories-list .existing-item[data-id="${selectedCategory.id}"]`);
+            if (categoryElement) {
+                categoryElement.classList.add('selected');
+            }
+            updateSelectedCategoryDisplay();
+        }
+        
+        updateSelectedTagsDisplay();
+        updateSelectedStacksDisplay();
+    }
+    
+    function selectCategory(element) {
+        const id = parseInt(element.dataset.id);
+        const name = element.dataset.name;
+        
+        if (selectedCategory.id === id) {
+            selectedCategory = { id: null, name: null };
+            element.classList.remove('selected');
+        } else {
+            selectedCategory = { id, name };
+            document.querySelectorAll('#categories-list .existing-item').forEach(el => {
+                el.classList.remove('selected');
+            });
+            element.classList.add('selected');
+        }
+        
+        updateSelectedCategoryDisplay();
+        document.getElementById('category-id').value = selectedCategory.id || '';
+    }
+    
+    function updateSelectedCategoryDisplay() {
+        const container = document.getElementById('selected-category');
+        if (selectedCategory.id) {
+            container.innerHTML = `<span class="item-chip">${escapeHtml(selectedCategory.name)}</span>`;
+        } else {
+            container.innerHTML = '';
+        }
+    }
+    
+    async function addNewCategory() {
+        const input = document.getElementById('new-category-input');
+        const title = input.value.trim();
+        
+        if (!title) {
+            showMessage('Введите название категории', 'error');
+            return;
+        }
+        
+        try {
+            const response = await fetch(API_URLS.createCategory, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({ title: title })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                const list = document.getElementById('categories-list');
+                const newItem = document.createElement('span');
+                newItem.className = 'existing-item';
+                newItem.dataset.id = data.id;
+                newItem.dataset.name = data.title;
+                newItem.textContent = data.title;
+                newItem.onclick = () => selectCategory(newItem);
+                list.appendChild(newItem);
+                
+                selectCategory(newItem);
+                input.value = '';
+                showMessage(`Категория "${data.title}" добавлена`, 'success');
+            } else {
+                showMessage(data.error, 'error');
+            }
+        } catch (error) {
+            showMessage('Ошибка при добавлении категории', 'error');
+        }
+    }
+    
+    function handleCategoryEnter(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            addNewCategory();
+        }
+    }
+    
+    function toggleTag(element) {
+        const id = parseInt(element.dataset.id);
+        const name = element.dataset.name;
+        
+        const index = selectedTags.findIndex(t => t.id === id);
+        
+        if (index === -1) {
+            selectedTags.push({ id, name });
+            element.classList.add('selected');
+        } else {
+            selectedTags.splice(index, 1);
+            element.classList.remove('selected');
+        }
+        
+        updateSelectedTagsDisplay();
+        document.getElementById('tags-ids').value = selectedTags.map(t => t.id).join(',');
+    }
+    
+    function updateSelectedTagsDisplay() {
+        const container = document.getElementById('selected-tags');
+        container.innerHTML = selectedTags.map(tag => `
+            <span class="item-chip">
+                ${escapeHtml(tag.name)}
+                <span class="remove" onclick="removeTag(${tag.id})">×</span>
+            </span>
+        `).join('');
+    }
+    
+    function removeTag(id) {
+        selectedTags = selectedTags.filter(t => t.id !== id);
+        const tagElement = document.querySelector(`#tags-list .existing-item[data-id="${id}"]`);
+        if (tagElement) tagElement.classList.remove('selected');
+        updateSelectedTagsDisplay();
+        document.getElementById('tags-ids').value = selectedTags.map(t => t.id).join(',');
+    }
+    
+    async function addNewTag() {
+        const input = document.getElementById('new-tag-input');
+        const name = input.value.trim();
+        
+        if (!name) {
+            showMessage('Введите название тега', 'error');
+            return;
+        }
+        
+        try {
+            const response = await fetch(API_URLS.createTag, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({ name: name })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                const list = document.getElementById('tags-list');
+                const newItem = document.createElement('span');
+                newItem.className = 'existing-item';
+                newItem.dataset.id = data.id;
+                newItem.dataset.name = data.name;
+                newItem.textContent = data.name;
+                newItem.onclick = () => toggleTag(newItem);
+                list.appendChild(newItem);
+                
+                toggleTag(newItem);
+                input.value = '';
+                showMessage(`Тег "${data.name}" добавлен`, 'success');
+            } else {
+                showMessage(data.error, 'error');
+            }
+        } catch (error) {
+            showMessage('Ошибка при добавлении тега', 'error');
+        }
+    }
+    
+    function handleTagEnter(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            addNewTag();
+        }
+    }
+    
+    function toggleStack(element) {
+        const id = parseInt(element.dataset.id);
+        const name = element.dataset.name;
+        
+        const index = selectedStacks.findIndex(s => s.id === id);
+        
+        if (index === -1) {
+            selectedStacks.push({ id, name });
+            element.classList.add('selected');
+        } else {
+            selectedStacks.splice(index, 1);
+            element.classList.remove('selected');
+        }
+        
+        updateSelectedStacksDisplay();
+        document.getElementById('stacks-ids').value = selectedStacks.map(s => s.id).join(',');
+    }
+    
+    function updateSelectedStacksDisplay() {
+        const container = document.getElementById('selected-stacks');
+        container.innerHTML = selectedStacks.map(stack => `
+            <span class="item-chip">
+                ${escapeHtml(stack.name)}
+                <span class="remove" onclick="removeStack(${stack.id})">×</span>
+            </span>
+        `).join('');
+    }
+    
+    function removeStack(id) {
+        selectedStacks = selectedStacks.filter(s => s.id !== id);
+        const stackElement = document.querySelector(`#stacks-list .existing-item[data-id="${id}"]`);
+        if (stackElement) stackElement.classList.remove('selected');
+        updateSelectedStacksDisplay();
+        document.getElementById('stacks-ids').value = selectedStacks.map(s => s.id).join(',');
+    }
+    
+    async function addNewStack() {
+        const input = document.getElementById('new-stack-input');
+        const name = input.value.trim();
+        
+        if (!name) {
+            showMessage('Введите название стека', 'error');
+            return;
+        }
+        
+        try {
+            const response = await fetch(API_URLS.createStack, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({ name: name })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                const list = document.getElementById('stacks-list');
+                const newItem = document.createElement('span');
+                newItem.className = 'existing-item';
+                newItem.dataset.id = data.id;
+                newItem.dataset.name = data.name;
+                newItem.textContent = data.name;
+                newItem.onclick = () => toggleStack(newItem);
+                list.appendChild(newItem);
+                
+                toggleStack(newItem);
+                input.value = '';
+                showMessage(`Стек "${data.name}" добавлен`, 'success');
+            } else {
+                showMessage(data.error, 'error');
+            }
+        } catch (error) {
+            showMessage('Ошибка при добавлении стека', 'error');
+        }
+    }
+    
+    function handleStackEnter(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            addNewStack();
+        }
+    }
+    
+    async function submitPattern(data) {
+        let url, method;
+        if (isEditing && patternId && API_URLS.updatePattern) {
+            url = API_URLS.updatePattern;
+            method = 'PUT';
+        } else {
+            url = API_URLS.createPattern;
+            method = 'POST';
+        }
+        
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify(data)
+        });
+        
+        return await response.json();
+    }
+    
+    document.getElementById('pattern-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const title = document.getElementById('title').value.trim();
+        const categoryId = document.getElementById('category-id').value;
+        
+        if (!title) {
+            showMessage('Введите заголовок', 'error');
+            return;
+        }
+        
+        if (!categoryId) {
+            showMessage('Выберите категорию', 'error');
+            return;
+        }
+        
+        const formData = {
+            title: title,
+            category: parseInt(categoryId),
+            tags: selectedTags.map(t => t.id),
+            stacks: selectedStacks.map(s => s.id),
+            term: document.getElementById('term').value,
+            problem: document.getElementById('problem').value,
+            solution: document.getElementById('solution').value,
+            examples: document.getElementById('examples').value,
+            consclusions: document.getElementById('consclusions').value
+        };
+        
+        showMessage('Сохранение...', 'info');
+        
+        try {
+            const result = await submitPattern(formData);
+            
+            if (result.success) {
+                showMessage(result.message, 'success');
+                
+                setTimeout(() => {
+                    window.location.href = `/pattern/${result.pattern_id}/`;
+                }, 1500);
+            } else {
+                showMessage(result.error, 'error');
+            }
+        } catch (error) {
+            showMessage('Ошибка при сохранении', 'error');
+        }
+    });
+    
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    function showMessage(message, type) {
+        const container = document.getElementById('message-container');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message message-${type}`;
+        messageDiv.textContent = message;
+        container.innerHTML = '';
+        container.appendChild(messageDiv);
+        
+        setTimeout(() => {
+            messageDiv.remove();
+        }, 5000);
+    }
+    
+    initSelectedItems();
+</script>
+{% endblock %}

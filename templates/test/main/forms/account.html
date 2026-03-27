@@ -1,0 +1,405 @@
+{% extends "test/main/index.html" %}
+{% load static %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-card">
+        <div class="profile-header">
+            <h1 class="profile-title">👤 {{ user.username }}</h1>
+            <div class="role-badge {% if user.is_superuser %}admin{% else %}user{% endif %}">
+                {% if user.is_superuser %}👑 Администратор{% else %}📖 Пользователь{% endif %}
+            </div>
+        </div>
+        
+        <div class="profile-stats">
+            <div class="stat-item">
+                <div class="stat-number">{{ patterns_usr|length }}</div>
+                <div class="stat-label">
+                    {% if user.is_superuser %}Всего паттернов{% else %}В избранном{% endif %}
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">{{ user.date_joined|date:"d.m.Y" }}</div>
+                <div class="stat-label">Дата регистрации</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="favorites-section">
+        <h2 class="section-title">
+            {% if user.is_superuser %}
+                📚 Все паттерны
+            {% else %}
+                ⭐ Избранные паттерны
+            {% endif %}
+        </h2>
+        
+        {% if patterns_usr %}
+            <div class="favorites-grid">
+                {% for pattern in patterns_usr %}
+                    <div class="favorite-card" data-id="{{ pattern.id }}">
+                        <div class="favorite-header">
+                            <h3>{{ pattern.title }}</h3>
+                            {% if user.is_superuser %}
+                                <div class="favorite-actions">
+                                    <a href="{% url 'editor_edit' pattern.id %}" class="action-btn edit-btn" title="Редактировать">✏️</a>
+                                    <button onclick="deletePattern({{ pattern.id }}, '{{ pattern.title|escapejs }}')" class="action-btn delete-btn" title="Удалить">🗑️</button>
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% if pattern.term %}
+                            <p class="favorite-term">{{ pattern.term|truncatechars:150 }}</p>
+                        {% endif %}
+                        <div class="favorite-category">
+                            📁 {{ pattern.categories.title }}
+                        </div>
+                        <div class="favorite-footer">
+                            <a href="{% url 'pattern_detail' pattern.id %}" class="details-link gold-dark">Подробнее →</a>
+                            {% if not user.is_superuser %}
+                                <button onclick="removeFromFavorites({{ pattern.id }})" class="remove-favorite" title="Удалить из избранного">✖</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-favorites">
+                {% if user.is_superuser %}
+                    <p>😕 Пока нет ни одного паттерна</p>
+                    <a href="{% url 'editor' %}" class="details-link gold" style="margin-top: 1rem; display: inline-block;">➕ Создать первый паттерн</a>
+                {% else %}
+                    <p>😕 У вас пока нет избранных паттернов</p>
+                    <a href="{% url 'index' %}" class="details-link gold" style="margin-top: 1rem; display: inline-block;">📚 Перейти в каталог</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .profile-container {
+        max-width: 100%;
+    }
+    
+    .profile-card {
+        background: #FFE9C2;
+        border-radius: 12px;
+        padding: 30px;
+        margin-bottom: 30px;
+        border: 1px solid #f0d8a8;
+    }
+    
+    .profile-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #FED361;
+    }
+    
+    .profile-title {
+        font-size: 28px;
+        color: #B47C2E;
+        margin: 0;
+    }
+    
+    .role-badge {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+    
+    .role-badge.admin {
+        background: #c6f6d5;
+        color: #22543d;
+    }
+    
+    .role-badge.user {
+        background: #bee3f8;
+        color: #2c5282;
+    }
+    
+    .profile-stats {
+        display: flex;
+        gap: 40px;
+    }
+    
+    .stat-item {
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 28px;
+        font-weight: bold;
+        color: #B47C2E;
+    }
+    
+    .stat-label {
+        font-size: 14px;
+        color: #666;
+        margin-top: 5px;
+    }
+    
+    .favorites-section {
+        background: white;
+        border-radius: 12px;
+    }
+    
+    .section-title {
+        font-size: 24px;
+        color: #B47C2E;
+        margin-bottom: 25px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #FED361;
+        display: inline-block;
+    }
+    
+    .favorites-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 25px;
+        margin-top: 20px;
+    }
+    
+    .favorite-card {
+        background: #FFE9C2;
+        border-radius: 12px;
+        padding: 20px;
+        transition: all 0.3s ease;
+        border: 1px solid #f0d8a8;
+        position: relative;
+    }
+    
+    .favorite-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .favorite-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .favorite-header h3 {
+        font-size: 20px;
+        color: #B47C2E;
+        margin: 0;
+    }
+    
+    .favorite-actions {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .action-btn {
+        background: white;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        padding: 5px 8px;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+    }
+    
+    .edit-btn:hover {
+        background: #FED361;
+        transform: scale(1.05);
+    }
+    
+    .delete-btn:hover {
+        background: #dc3545;
+        color: white;
+        transform: scale(1.05);
+    }
+    
+    .favorite-term {
+        font-size: 14px;
+        line-height: 1.5;
+        color: #555;
+        margin-bottom: 12px;
+    }
+    
+    .favorite-category {
+        display: inline-block;
+        background: #FED361;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        color: #333;
+        margin-bottom: 15px;
+    }
+    
+    .favorite-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 15px;
+    }
+    
+    .remove-favorite {
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        color: #dc3545;
+        transition: all 0.2s ease;
+        padding: 5px;
+    }
+    
+    .remove-favorite:hover {
+        transform: scale(1.1);
+        color: #c82333;
+    }
+    
+    .empty-favorites {
+        text-align: center;
+        padding: 50px;
+        background: #FFE9C2;
+        border-radius: 12px;
+        color: #666;
+    }
+    
+    .empty-favorites p {
+        margin-bottom: 20px;
+    }
+    
+    .details-link {
+        display: inline-block;
+        padding: 8px 20px;
+        text-decoration: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .details-link.gold {
+        background: #FED361;
+        color: #333;
+    }
+    
+    .details-link.gold-dark {
+        background: #FED361;
+        color: #333;
+    }
+    
+    .details-link.gold-dark:hover, 
+    .details-link.gold:hover {
+        background: #e5b840;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+    }
+    
+    @media (max-width: 768px) {
+        .profile-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        
+        .profile-stats {
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .favorites-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    async function deletePattern(id, title) {
+        if (!confirm(`Вы уверены, что хотите удалить паттерн "${title}"?`)) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/patterns/delete/${id}/`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                const card = document.querySelector(`.favorite-card[data-id="${id}"]`);
+                if (card) {
+                    card.remove();
+                }
+                // Обновляем счетчик
+                const statNumber = document.querySelector('.stat-number');
+                if (statNumber) {
+                    const currentCount = parseInt(statNumber.textContent);
+                    statNumber.textContent = currentCount - 1;
+                }
+                // Если не осталось паттернов, перезагружаем
+                const remainingCards = document.querySelectorAll('.favorite-card').length;
+                if (remainingCards === 0) {
+                    location.reload();
+                }
+            } else {
+                alert(data.error || 'Ошибка при удалении');
+            }
+        } catch (error) {
+            alert('Ошибка при удалении');
+        }
+    }
+    
+    async function removeFromFavorites(patternId) {
+        try {
+            const response = await fetch('/api/set_like/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ pattern_id: patternId })
+            });
+            
+            if (response.ok) {
+                const card = document.querySelector(`.favorite-card[data-id="${patternId}"]`);
+                if (card) {
+                    card.remove();
+                }
+                // Обновляем счетчик
+                const statNumber = document.querySelector('.stat-number');
+                if (statNumber) {
+                    const currentCount = parseInt(statNumber.textContent);
+                    statNumber.textContent = currentCount - 1;
+                }
+                // Если не осталось паттернов, показываем пустое состояние
+                const remainingCards = document.querySelectorAll('.favorite-card').length;
+                if (remainingCards === 0) {
+                    location.reload();
+                }
+            }
+        } catch (error) {
+            alert('Ошибка при удалении из избранного');
+        }
+    }
+</script>
+{% endblock %}

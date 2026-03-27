@@ -1,0 +1,232 @@
+{% extends "test/main/index.html" %}
+{% block content %}
+<div class="catalog-header">
+    <h1>{{ patterns_main.0.pattern.categories.title|default:"Паттерны" }}</h1>
+</div>
+
+<div class="patterns-list">
+    {% for item in patterns_main %}
+    <div class="pattern-card">
+        <div class="pattern-header">
+            <h3>{{ item.pattern.title }}</h3>
+            <div class="rating-buttons">
+                <button class="like-btn" data-pattern-id="{{ item.pattern.id }}" data-likes="{{ item.raitng.likes|default:0 }}">
+                    👍 <span class="likes-count">{{ item.raitng.likes|default:0 }}</span>
+                </button>
+                <button class="dislike-btn" data-pattern-id="{{ item.pattern.id }}" data-dislikes="{{ item.raitng.dislikes|default:0 }}">
+                    👎 <span class="dislikes-count">{{ item.raitng.dislikes|default:0 }}</span>
+                </button>
+            </div>
+        </div>
+        <p class="pattern-description">{{ item.pattern.term|truncatechars:150 }}</p>
+        <a href="{% url 'pattern_detail' item.pattern.id %}" class="details-link gold-dark">Подробнее</a>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+        <p>В этой категории пока нет паттернов</p>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    async function updateRating(patternId) {
+        try {
+            const response = await fetch('/api/get_ratings/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ pattern_id: patternId })
+            });
+            
+            const data = await response.json();
+            
+            const likeSpan = document.querySelector(`.like-btn[data-pattern-id="${patternId}"] .likes-count`);
+            const dislikeSpan = document.querySelector(`.dislike-btn[data-pattern-id="${patternId}"] .dislikes-count`);
+            
+            if (likeSpan) likeSpan.textContent = data.likes;
+            if (dislikeSpan) dislikeSpan.textContent = data.dislikes;
+        } catch (error) {
+            console.error('Ошибка обновления рейтинга:', error);
+        }
+    }
+
+    async function setLike(patternId) {
+        try {
+            const response = await fetch('/api/set_like/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ pattern_id: patternId })
+            });
+            
+            if (response.ok) {
+                await updateRating(patternId);
+            }
+        } catch (error) {
+            console.error('Ошибка при лайке:', error);
+        }
+    }
+
+    async function setDislike(patternId) {
+        try {
+            const response = await fetch('/api/set_dislike/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ pattern_id: patternId })
+            });
+            
+            if (response.ok) {
+                await updateRating(patternId);
+            }
+        } catch (error) {
+            console.error('Ошибка при дизлайке:', error);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const likeButtons = document.querySelectorAll('.like-btn');
+        const dislikeButtons = document.querySelectorAll('.dislike-btn');
+        
+        likeButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const patternId = this.dataset.patternId;
+                setLike(patternId);
+            });
+        });
+        
+        dislikeButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const patternId = this.dataset.patternId;
+                setDislike(patternId);
+            });
+        });
+    });
+</script>
+
+<style>
+    .catalog-header h1 {
+        font-size: 28px;
+        color: #B47C2E;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #FED361;
+    }
+    
+    .patterns-list {
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+    }
+    
+    .pattern-card {
+        background: #FFE9C2;
+        border-radius: 12px;
+        padding: 25px;
+        transition: all 0.3s ease;
+    }
+    
+    .pattern-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .pattern-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    
+    .pattern-header h3 {
+        font-size: 22px;
+        color: #B47C2E;
+        margin: 0;
+    }
+    
+    .rating-buttons {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .like-btn, .dislike-btn {
+        padding: 5px 12px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s ease;
+        background: white;
+        font-weight: 500;
+    }
+    
+    .like-btn:hover {
+        background: #4caf50;
+        color: white;
+        transform: scale(1.05);
+    }
+    
+    .dislike-btn:hover {
+        background: #f44336;
+        color: white;
+        transform: scale(1.05);
+    }
+    
+    .pattern-description {
+        font-size: 15px;
+        line-height: 1.5;
+        color: #555;
+        margin-bottom: 20px;
+    }
+    
+    .details-link {
+        display: inline-block;
+        padding: 8px 20px;
+        background: #FED361;
+        color: #333;
+        text-decoration: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .details-link:hover {
+        background: #e5b840;
+        transform: translateY(-1px);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 50px;
+        background: #FFE9C2;
+        border-radius: 12px;
+        color: #666;
+    }
+</style>
+{% endblock %}

@@ -4,32 +4,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вход в систему</title>
-    <link rel="stylesheet" href="{% static 'registration/login.css' %}">
+    <title>Авторизация - Pattern Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 440px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: #FED361;
+            border-radius: 24px;
+            padding: 40px 36px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+        }
+
+        .auth-card h2 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #1a1a1a;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .register-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 32px;
+            padding: 10px 16px;
+            border: 1.5px solid #ffffff;
+            border-radius: 60px;
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        .register-box span {
+            font-size: 14px;
+            color: #1a1a1a;
+        }
+
+        .register-btn {
+            background: #e0e0e0;
+            color: #1a1a1a;
+            border: none;
+            border-radius: 40px;
+            padding: 6px 18px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .register-btn:hover {
+            background: #c0c0c0;
+            transform: translateY(-1px);
+        }
+
+        .auth-card form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .auth-card input {
+            width: 100%;
+            padding: 14px 18px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .auth-card input:focus {
+            border-color: #FF8C42;
+            box-shadow: 0 0 0 3px rgba(255, 140, 66, 0.2);
+        }
+
+        .auth-card input::placeholder {
+            color: #adb5bd;
+        }
+
+        .login-btn {
+            background: white;
+            color: #1a1a1a;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .login-btn:hover {
+            background: #f5f5f5;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .error {
+            color: #dc2626;
+            font-size: 14px;
+            text-align: center;
+            margin-top: -8px;
+        }
+
+        @media (max-width: 480px) {
+            .auth-card {
+                padding: 32px 24px;
+            }
+            
+            .auth-card h2 {
+                font-size: 24px;
+            }
+            
+            .register-box {
+                flex-direction: column;
+                gap: 10px;
+                padding: 12px 16px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <form class="login-container" method="post">
-        {% csrf_token %}
-        <h2>Войти</h2>
-        
-        <input class="input-button" name="username" placeholder="Имя пользователя" type="text" value="{{ form.username.value|default:'' }}"required>
-        {% if form.username.errors %}
-            <p class="error">{{ form.username.errors.0 }}</p>
-        {% endif %}
-        <input class="input-button"name="password" type="password" placeholder="Пароль" required>
-        {% if form.password.errors %}
-            <p class="error">{{ form.password.errors.0 }}</p>
-        {% endif %}
-        
-        {% if form.non_field_errors %}
-            <p class="error" id="loginError">
-            Неверное имя пользователя или пароль
-            </p>
-        {% endif %}
-        <div class="action-buttons">
-            <button class="btn register-btn" onclick="window.location.href='/sign-up'">Регистрация</button>
-            <button class="btn login-btn green-btn">Войти</button>
+    <div class="auth-container">
+        <div class="auth-card">
+            <h2>Авторизация</h2>
+
+            <div class="register-box">
+                <span>🤔 Нет аккаунта?</span>
+                <a href="{% url 'sign_up' %}" class="register-btn">Зарегистрироваться</a>
+            </div>
+
+            <form method="post" action="{% url 'login' %}">
+                {% csrf_token %}
+
+                <input type="text" name="username" placeholder="Имя пользователя" value="{{ form.username.value|default:'' }}" required>
+                {% if form.username.errors %}
+                    <p class="error">{{ form.username.errors.0 }}</p>
+                {% endif %}
+
+                <input type="password" name="password" placeholder="Пароль" required>
+                {% if form.password.errors %}
+                    <p class="error">{{ form.password.errors.0 }}</p>
+                {% endif %}
+
+                {% if form.non_field_errors %}
+                    <p class="error">{{ form.non_field_errors.0 }}</p>
+                {% endif %}
+
+                <button type="submit" class="login-btn">Войти</button>
+            </form>
         </div>
-    </form>
+    </div>
 </body>
 </html>

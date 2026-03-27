@@ -14,9 +14,11 @@ from django.views.decorators.csrf import csrf_exempt
 def index(request):
     categories = Categories.objects.all()
     patterns = Patterns.objects.all()
-    return render(request, 'test/index.html', {"categories": categories, "patterns":patterns})
+    return render(request, 'test/main/forms/home_content.html', {"categories": categories, "patterns":patterns})
 """Рендер определённого каталога по названию"""
 def catalog(request, title):
+    categories = Categories.objects.all()
+    patterns_all = Patterns.objects.all()
     category = get_object_or_404(Categories, title=title)
     if category.title == title:
         patterns = Patterns.objects.filter(categories=category)
@@ -26,20 +28,24 @@ def catalog(request, title):
             data.append(
                 {
                     "pattern": pattern,
-                    "raitng": raitng
+                    "raitng": raitng,
                 }
             )
-        return render(request, 'test/catalog.html', {"patterns": data})
-    return render(request, 'test/catalog.html', {"patterns": "None"})
+        return render(request, 'test/main/forms/catalog.html', {"patterns_main": data, "categories": categories, "patterns":patterns_all})
+    return render(request, 'test/main/forms/catalog.html', {"patterns": "None"})
 """Рендер страницы одного из патернов по id"""
 def pattern_detail(request, id):
+    categories = Categories.objects.all()
+    patterns = Patterns.objects.all()
     pattern = get_object_or_404(Patterns, id=id)
     raitng = Ratings.objects.get(patterns=pattern)
     data = {
             "pattern": pattern,
-            "raitng": raitng
+            "raitng": raitng,
+            "categories": categories, 
+            "patterns":patterns
         }
-    return render(request, 'test/pattern-detail.html', data)
+    return render(request, 'test/main/forms/pattern_detail.html', data)
 
 @login_required
 def check_favorite(request):
@@ -90,11 +96,15 @@ def set_dislike(request):
     rat_prof, created = Rating_profiles.objects.get_or_create(profiles=profile, ratings=rating)
     if rat_prof.dislike:
 
-        if rating.dislikes is not None and rating.dislikes > 0:
+        if rating.dislikes is None:
+            rating.dislikes = 0
+        else:
             rating.dislikes -= 1
-            rating.save()
-            rat_prof.dislike = False
-            rat_prof.save()
+            
+
+        rating.save()
+        rat_prof.dislike = False
+        rat_prof.save()
         return JsonResponse({'status': 'ok'}, status=200)
     elif rat_prof.like:
         if fav.exists():
@@ -103,7 +113,13 @@ def set_dislike(request):
             rating.dislikes = 1
         else:
             rating.dislikes += 1
+            
+        if rating.likes is None:
+            rating.likes = 0
+        elif rating.likes > 0:
+            rating.likes -= 1
         rating.save()
+        rat_prof.like = False
         rat_prof.dislike = True
         rat_prof.save()
         return JsonResponse({'status': 'ok'}, status=200)
@@ -115,6 +131,7 @@ def set_dislike(request):
         else:
             rating.dislikes += 1
         rating.save()
+        rat_prof.like = False
         rat_prof.dislike = True
         rat_prof.save()
         return JsonResponse({'status': 'ok'}, status=200)
@@ -138,11 +155,15 @@ def set_like(request):
     if rat_prof.like:
         if fav.exists():
             fav.delete()
-        if rating.likes is not None and rating.likes > 0:
+        if rating.likes is None:
+            rating.likes = 0
+        else:
             rating.likes -= 1
-            rating.save()
-            rat_prof.like = False
-            rat_prof.save()
+
+
+        rating.save()
+        rat_prof.like = False
+        rat_prof.save()
         return JsonResponse({'status': 'ok'}, status=200)
     elif rat_prof.dislike:
         fav.create(
@@ -153,7 +174,13 @@ def set_like(request):
             rating.likes = 1
         else:
             rating.likes += 1
+            
+        if rating.dislikes is None:
+            rating.dislikes = 0
+        elif rating.dislikes > 0:
+            rating.dislikes -= 1
         rating.save()
+        rat_prof.dislike = False
         rat_prof.like = True
         rat_prof.save()
         return JsonResponse({'status': 'ok'}, status=200)
@@ -167,6 +194,7 @@ def set_like(request):
         else:
             rating.likes += 1
         rating.save()
+        rat_prof.dislike = False
         rat_prof.like = True
         rat_prof.save()
         return JsonResponse({'status': 'ok'}, status=200)
@@ -237,15 +265,17 @@ def select_comments(request):
 """Рендер профиля авторизованного пользователя"""
 @login_required
 def profile(request):
+    categories = Categories.objects.all()
+    patterns = Patterns.objects.all()
     user = request.user
     auth_user = User.objects.get(id=user.id)
     if auth_user.is_superuser:
-        patterns = Patterns.objects.all().order_by('-id')
+        patterns_usr = Patterns.objects.all().order_by('-id')
     else:
         profile = Profiles.objects.get(user=user)
         fav = Favorites.objects.filter(users=profile).order_by('-id')
-        patterns = [f.patterns for f in fav]
-    return render(request, 'test/account.html', {"patterns": patterns})
+        patterns_usr = [f.patterns for f in fav]
+    return render(request, 'test/main/forms/account.html', {"patterns_usr": patterns_usr, "categories": categories, "patterns": patterns})
 
 """API для удаления паттерна по id"""
 @login_required
@@ -279,6 +309,7 @@ def delete_pattern_api(request, id):
 def editor(request, id=None):
     user = request.user
     auth_user = User.objects.get(id=user.id)
+    patterns =  Patterns.objects.all()
     if not auth_user.is_superuser:
         return redirect('/')
     
@@ -303,9 +334,10 @@ def editor(request, id=None):
         'pattern': pattern,
         'selected_tag_ids': selected_tag_ids,
         'selected_stack_ids': selected_stack_ids,
+        'patterns': patterns
     }
     
-    return render(request, 'test/editor.html', context)
+    return render(request, 'test/main/forms/editor.html', context)
 
 """API для создания тега"""
 @login_required

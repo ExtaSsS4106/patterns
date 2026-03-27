@@ -1,0 +1,931 @@
+/* ===== ОБЩИЕ СТИЛИ ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    background: white;
+}
+
+.wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===== ХЕДЕР ===== */
+.header {
+    background: #FED361;
+    padding: 20px 40px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.logo-area {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.logo {
+    width: 85px;
+    height: 85px;
+    object-fit: contain;
+    border-radius: 13px;
+    padding: 8px;
+}
+
+.header h1 {
+    color: white;
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Кнопки авторизации */
+.auth-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.auth-btn {
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.auth-btn.register {
+    background: transparent;
+    color: white;
+    border: 1px solid white;
+}
+
+.auth-btn.register:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.auth-btn.login {
+    background: white;
+    color: #FED361;
+    border: none;
+}
+
+.auth-btn.login:hover {
+    background: #f5f5f5;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== ОСНОВНОЙ КОНТЕНТ ===== */
+.main-content {
+    display: flex;
+    flex: 1;
+}
+
+/* Боковое меню */
+.sidebar {
+    width: 320px;
+    background: #FFE9C2;
+    padding: 30px 20px;
+    border-right: 1px solid #f0d8a8;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.nav-item {
+    border-bottom: 1px solid #f0d8a8;
+    padding-bottom: 16px;
+}
+
+.nav-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    padding: 8px 0;
+    transition: all 0.3s ease;
+}
+
+.nav-header:hover {
+    background: #f5dfb5;
+    margin: 0 -10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+}
+
+.nav-header:hover .nav-title {
+    color: #B47C2E;
+}
+
+.nav-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+    transition: color 0.3s ease;
+}
+
+.arrow {
+    font-size: 14px;
+    color: #B47C2E;
+    transition: transform 0.3s ease;
+}
+
+.sub-nav {
+    list-style: none;
+    padding-left: 20px;
+    margin-top: 12px;
+    display: none;
+}
+
+.sub-nav li {
+    margin-bottom: 12px;
+}
+
+.sub-nav li a {
+    text-decoration: none;
+    color: #555;
+    font-size: 15px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: block;
+    padding: 5px 0;
+}
+
+.sub-nav li a:hover {
+    color: #B47C2E;
+    padding-left: 8px;
+}
+
+/* ===== ДОБАВЛЕННЫЕ СТИЛИ ДЛЯ ПУНКТОВ БЕЗ СТРЕЛКИ ===== */
+.nav-header.no-arrow {
+    cursor: pointer;
+    justify-content: flex-start;
+    gap: 10px;
+    text-decoration: none;
+}
+
+.nav-header.no-arrow:hover {
+    background: #f5dfb5;
+    margin: 0 -10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+}
+
+.nav-header.no-arrow .nav-title {
+    color: #333;
+}
+
+.nav-header.no-arrow:hover .nav-title {
+    color: #B47C2E;
+}
+
+/* Основная область */
+.content {
+    flex: 1;
+    padding: 40px;
+    background: white;
+}
+
+/* ===== ГЛАВНАЯ СТРАНИЦА ===== */
+.intro-block {
+    margin-bottom: 48px;
+}
+
+.intro-block h2 {
+    font-size: 32px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 24px;
+}
+
+.intro-section {
+    background: #e8e8e8;
+    border-radius: 12px;
+    padding: 20px 24px;
+    max-width: 380px;
+}
+
+.intro-section h3 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #000;
+    margin-bottom: 8px;
+}
+
+.intro-section p {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 16px;
+}
+
+.patterns-block {
+    margin-top: 40px;
+}
+
+.patterns-block h2 {
+    font-size: 32px;
+    font-weight: 600;
+    color: #000;
+    margin-bottom: 24px;
+}
+
+.patterns-grid {
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.pattern-card.square {
+    width: 260px;
+    height: 260px;
+    background: #e0e0e0;
+    border-radius: 12px;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.pattern-card.square:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.pattern-card.square h3 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+}
+
+/* ===== ИЗБРАННОЕ ===== */
+.profile-header {
+    margin-bottom: 32px;
+}
+
+.profile-header h1 {
+    font-size: 36px;
+    font-weight: 600;
+    color: #333;
+    padding-bottom: 16px;
+    border-bottom: 3px solid #FED361;
+    display: inline-block;
+}
+
+.favorites-section h2 {
+    font-size: 28px;
+    font-weight: 600;
+    color: #B47C2E;
+    margin-bottom: 24px;
+}
+
+.favorites-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.favorite-card {
+    background: #FFE9C2;
+    border-radius: 12px;
+    padding: 24px;
+    transition: all 0.3s ease;
+    border: 1px solid #f0d8a8;
+}
+
+.favorite-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.favorite-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.favorite-card-header h3 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #B47C2E;
+    margin: 0;
+}
+
+.favorite-remove {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #FED361;
+    transition: all 0.3s ease;
+}
+
+.favorite-remove:hover {
+    color: #e5b840;
+    transform: scale(1.1);
+}
+
+.favorite-description {
+    font-size: 16px;
+    line-height: 1.5;
+    color: #555;
+    margin-bottom: 16px;
+}
+
+/* ===== АДМИН-ПАНЕЛЬ ===== */
+.admin-header {
+    margin-bottom: 32px;
+}
+
+.admin-header h1 {
+    font-size: 32px;
+    font-weight: 600;
+    color: #333;
+    padding-bottom: 16px;
+    border-bottom: 3px solid #FED361;
+    display: inline-block;
+}
+
+.editor-form {
+    max-width: 800px;
+}
+
+.form-row {
+    margin-bottom: 24px;
+}
+
+.form-row label {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    color: #B47C2E;
+    margin-bottom: 8px;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+    outline: none;
+    border-color: #FED361;
+    box-shadow: 0 0 0 3px rgba(254, 211, 97, 0.2);
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.form-actions {
+    margin-top: 32px;
+    text-align: right;
+}
+
+.btn-save {
+    background: #FED361;
+    color: #333;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.btn-save:hover {
+    background: #e5b840;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+}
+
+/* ===== АВТОРИЗАЦИЯ ===== */
+.auth-container {
+    width: 100%;
+    max-width: 440px;
+    margin: auto;
+}
+
+.auth-card {
+    background: #FED361;
+    border: 2px solid #e8e8e8;
+    border-radius: 24px;
+    padding: 40px 36px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.auth-card h2 {
+    font-size: 28px;
+    font-weight: 600;
+    color: #1a1a1a;
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.register-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 32px;
+    padding: 10px 16px;
+    border: 1.5px solid #ffffff;
+    border-radius: 60px;
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.register-box span {
+    font-size: 14px;
+    color: #1a1a1a;
+}
+
+.auth-card .register-btn {
+    background: #e0e0e0;
+    color: #1a1a1a;
+    border: none;
+    border-radius: 40px;
+    padding: 6px 18px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.auth-card .register-btn:hover {
+    background: #c0c0c0;
+}
+
+.auth-card form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.auth-card input {
+    width: 100%;
+    padding: 14px 18px;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    font-size: 15px;
+    outline: none;
+}
+
+.auth-card input:focus {
+    border-color: #FF8C42;
+    box-shadow: 0 0 0 3px rgba(255, 140, 66, 0.2);
+}
+
+.auth-card input::placeholder {
+    color: #adb5bd;
+}
+
+.login-btn {
+    background: white;
+    color: #1a1a1a;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+}
+
+.login-btn:hover {
+    background: #f5f5f5;
+}
+
+.error {
+    color: #dc2626;
+    font-size: 14px;
+    text-align: center;
+    margin-top: 8px;
+}
+
+/* ===== РЕГИСТРАЦИЯ ===== */
+.register-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: white;
+    padding: 20px;
+}
+
+.register-container {
+    background: #D4B667;
+    border-radius: 16px;
+    padding: 40px 32px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.register-container h1 {
+    text-align: center;
+    font-size: 28px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 32px;
+}
+
+.register-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.register-form .input-group {
+    width: 100%;
+}
+
+.register-form .input-field {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    outline: none;
+    background: white;
+}
+
+.register-form .input-field:focus {
+    border-color: #D4B667;
+    box-shadow: 0 0 0 3px rgba(212, 182, 103, 0.2);
+}
+
+.register-form .input-field::placeholder {
+    color: #999;
+}
+
+.register-form .register-btn {
+    width: 100%;
+    padding: 14px;
+    background: white;
+    color: #333;
+    border: 2px solid #D4B667;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 8px;
+}
+
+.register-form .register-btn:hover {
+    background: #D4B667;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(212, 182, 103, 0.3);
+}
+
+.login-link {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
+    color: #666;
+}
+
+.login-link a {
+    color: #D4B667;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.login-link a:hover {
+    text-decoration: underline;
+}
+
+/* ===== СТРАНИЦА СТАТЬИ ===== */
+.article-header h1 {
+    font-size: 36px;
+    color: #333;
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 3px solid #FED361;
+    display: inline-block;
+}
+
+.article-content section {
+    margin-bottom: 40px;
+}
+
+.article-content h2 {
+    font-size: 28px;
+    color: #B47C2E;
+    margin-bottom: 16px;
+}
+
+.article-content p {
+    font-size: 18px;
+    line-height: 1.6;
+    color: #444;
+    margin-bottom: 16px;
+}
+
+.article-content ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.article-content li {
+    font-size: 18px;
+    line-height: 1.6;
+    color: #444;
+    margin-bottom: 12px;
+    padding-left: 24px;
+    position: relative;
+}
+
+.article-content li::before {
+    content: "✓";
+    color: #FED361;
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+}
+
+.classification-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-top: 20px;
+}
+
+.class-card {
+    background: #FFE9C2;
+    border-radius: 12px;
+    padding: 24px;
+    transition: all 0.3s ease;
+}
+
+.class-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.class-card h3 {
+    font-size: 22px;
+    color: #B47C2E;
+    margin-bottom: 12px;
+}
+
+.class-card p {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 12px;
+}
+
+.class-card .examples {
+    font-size: 14px;
+    color: #888;
+    font-style: italic;
+}
+
+.back-link {
+    margin-top: 40px;
+    text-align: center;
+}
+
+.back-btn {
+    display: inline-block;
+    padding: 10px 24px;
+    background: #FED361;
+    color: #333;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.back-btn:hover {
+    background: #e5b840;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+}
+
+/* ===== ОБЩИЕ КНОПКИ ===== */
+.details-link {
+    display: inline-block;
+    padding: 8px 20px;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.details-link.gold {
+    background: #FED361;
+    color: #333;
+}
+
+.details-link.gold:hover {
+    background: #f5c94a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+}
+
+.details-link.gold-dark {
+    background: #FED361;
+    color: #333;
+    width: 100%;
+    text-align: center;
+}
+
+.details-link.gold-dark:hover {
+    background: #e5b840;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+}
+
+/* ===== АДАПТАЦИЯ ДЛЯ МОБИЛЬНЫХ ===== */
+@media (max-width: 768px) {
+    .main-content {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #f0d8a8;
+        padding: 20px;
+    }
+    
+    .content {
+        padding: 20px;
+    }
+    
+    .header {
+        padding: 15px 20px;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .logo-area {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .auth-buttons {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .header h1 {
+        font-size: 20px;
+    }
+    
+    .logo {
+        width: 35px;
+        height: 35px;
+    }
+    
+    .profile-header h1 {
+        font-size: 28px;
+    }
+    
+    .favorites-section h2 {
+        font-size: 24px;
+    }
+    
+    .favorite-card {
+        padding: 20px;
+    }
+    
+    .favorite-card-header h3 {
+        font-size: 20px;
+    }
+    
+    .favorite-description {
+        font-size: 15px;
+    }
+    
+    .intro-block h2 {
+        font-size: 28px;
+    }
+    
+    .intro-section {
+        max-width: 100%;
+    }
+    
+    .patterns-block h2 {
+        font-size: 28px;
+    }
+    
+    .patterns-grid {
+        justify-content: center;
+    }
+    
+    .pattern-card.square {
+        width: 200px;
+        height: 200px;
+        padding: 20px;
+    }
+    
+    .pattern-card.square h3 {
+        font-size: 18px;
+    }
+    
+    .article-header h1 {
+        font-size: 28px;
+    }
+    
+    .article-content h2 {
+        font-size: 24px;
+    }
+    
+    .article-content p,
+    .article-content li {
+        font-size: 16px;
+    }
+    
+    .classification-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .editor-form {
+        max-width: 100%;
+    }
+    
+    .admin-header h1 {
+        font-size: 28px;
+    }
+    
+    .btn-save {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .auth-card {
+        padding: 32px 24px;
+    }
+    
+    .auth-card h2 {
+        font-size: 24px;
+    }
+    
+    .register-box {
+        flex-direction: column;
+        gap: 10px;
+        padding: 12px 16px;
+    }
+    
+    .register-container {
+        padding: 32px 24px;
+    }
+    
+    .register-container h1 {
+        font-size: 24px;
+        margin-bottom: 24px;
+    }
+    
+    .register-form .input-field {
+        padding: 12px 14px;
+    }
+}

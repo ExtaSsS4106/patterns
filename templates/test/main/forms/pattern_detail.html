@@ -1,0 +1,419 @@
+{% extends "test/main/index.html" %}
+{% load static %}
+
+{% block content %}
+<div class="article-header">
+    <h1>{{ pattern.title }}</h1>
+</div>
+
+<div class="article-content">
+    <section>
+        <h2>Термин</h2>
+        <p>{{ pattern.term }}</p>
+    </section>
+
+    <section>
+        <h2>Проблема</h2>
+        <p>{{ pattern.problem }}</p>
+    </section>
+
+    <section>
+        <h2>Решение</h2>
+        <p>{{ pattern.solution }}</p>
+    </section>
+
+    <section>
+        <h2>Примеры</h2>
+        <p>{{ pattern.examples }}</p>
+    </section>
+
+    <section>
+        <h2>Выводы</h2>
+        <p>{{ pattern.consclusions }}</p>
+    </section>
+
+    <div class="rating-section">
+        <button class="like-btn" data-pattern-id="{{ pattern.id }}">
+            👍 <span class="likes-count">{{ raitng.likes|default:0 }}</span>
+        </button>
+        <button class="dislike-btn" data-pattern-id="{{ pattern.id }}">
+            👎 <span class="dislikes-count">{{ raitng.dislikes|default:0 }}</span>
+        </button>
+    </div>
+
+    <div class="comments-section">
+        <h3>Комментарии</h3>
+        {% if user.is_authenticated %}
+        <div class="comment-form-container">
+            <h4>Добавить комментарий</h4>
+            <form id="comment-form" data-pattern-id="{{ pattern.id }}">
+                {% csrf_token %}
+                <textarea name="comment" placeholder="Напишите комментарий..." required></textarea>
+                <button type="submit" class="btn-submit">Отправить</button>
+            </form>
+        </div>
+        {% else %}
+        <div class="login-to-comment">
+            <p><a href="{% url 'login' %}">Войдите</a> чтобы оставить комментарий</p>
+        </div>
+        {% endif %}
+        <div id="comments-list" class="comments-list">
+            <div class="loading-comments">Загрузка комментариев...</div>
+        </div>
+        
+
+    </div>
+</div>
+
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    async function updateRating(patternId) {
+        try {
+            const response = await fetch('/api/get_ratings/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ pattern_id: patternId })
+            });
+            
+            const data = await response.json();
+            
+            const likeSpan = document.querySelector(`.like-btn[data-pattern-id="${patternId}"] .likes-count`);
+            const dislikeSpan = document.querySelector(`.dislike-btn[data-pattern-id="${patternId}"] .dislikes-count`);
+            
+            if (likeSpan) likeSpan.textContent = data.likes;
+            if (dislikeSpan) dislikeSpan.textContent = data.dislikes;
+        } catch (error) {
+            console.error('Ошибка обновления рейтинга:', error);
+        }
+    }
+
+    async function setLike(patternId) {
+        try {
+            const response = await fetch('/api/set_like/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ pattern_id: patternId })
+            });
+            
+            if (response.ok) {
+                await updateRating(patternId);
+            }
+        } catch (error) {
+            console.error('Ошибка при лайке:', error);
+        }
+    }
+
+    async function setDislike(patternId) {
+        try {
+            const response = await fetch('/api/set_dislike/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ pattern_id: patternId })
+            });
+            
+            if (response.ok) {
+                await updateRating(patternId);
+            }
+        } catch (error) {
+            console.error('Ошибка при дизлайке:', error);
+        }
+    }
+
+    async function loadComments(patternId) {
+        try {
+            const response = await fetch('/select_comments/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ pattern_id: patternId })
+            });
+            
+            const data = await response.json();
+            const commentsContainer = document.getElementById('comments-list');
+            
+            if (data.comments && data.comments.length > 0) {
+                commentsContainer.innerHTML = data.comments.map(comment => `
+                    <div class="comment" data-comment-id="${comment.id}">
+                        <strong>${escapeHtml(comment.user__name)}</strong>
+                        <p>${escapeHtml(comment.comment)}</p>
+                        <small>${new Date(comment.created_at).toLocaleString()}</small>
+                    </div>
+                `).join('');
+            } else {
+                commentsContainer.innerHTML = '<p class="no-comments">Нет комментариев</p>';
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки комментариев:', error);
+            const commentsContainer = document.getElementById('comments-list');
+            commentsContainer.innerHTML = '<p class="no-comments">Ошибка загрузки комментариев</p>';
+        }
+    }
+
+    async function addComment(patternId, text) {
+        try {
+            const response = await fetch('/add_comment/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ 
+                    pattern_id: patternId, 
+                    text: text 
+                })
+            });
+            
+            if (response.ok) {
+                const form = document.getElementById('comment-form');
+                form.querySelector('textarea').value = '';
+                await loadComments(patternId);
+            } else {
+                const error = await response.json();
+                alert(error.error || 'Ошибка при добавлении комментария');
+            }
+        } catch (error) {
+            console.error('Ошибка при добавлении комментария:', error);
+            alert('Ошибка при добавлении комментария');
+        }
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const patternId = document.querySelector('.like-btn')?.dataset.patternId;
+        
+        // Загружаем комментарии при загрузке страницы
+        if (patternId) {
+            loadComments(patternId);
+        }
+        
+        const likeBtn = document.querySelector('.like-btn');
+        const dislikeBtn = document.querySelector('.dislike-btn');
+        const commentForm = document.getElementById('comment-form');
+        
+        if (likeBtn) {
+            likeBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const patternId = this.dataset.patternId;
+                setLike(patternId);
+            });
+        }
+        
+        if (dislikeBtn) {
+            dislikeBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const patternId = this.dataset.patternId;
+                setDislike(patternId);
+            });
+        }
+        
+        if (commentForm) {
+            commentForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const patternId = this.dataset.patternId;
+                const textarea = this.querySelector('textarea');
+                const text = textarea.value.trim();
+                
+                if (text) {
+                    await addComment(patternId, text);
+                }
+            });
+        }
+    });
+</script>
+
+<style>
+    .article-header h1 {
+        font-size: 32px;
+        color: #B47C2E;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #FED361;
+        display: inline-block;
+    }
+    
+    .article-content section {
+        margin-bottom: 35px;
+    }
+    
+    .article-content h2 {
+        font-size: 24px;
+        color: #B47C2E;
+        margin-bottom: 15px;
+    }
+    
+    .article-content p {
+        font-size: 16px;
+        line-height: 1.6;
+        color: #444;
+    }
+    
+    .rating-section {
+        display: flex;
+        gap: 15px;
+        margin: 30px 0;
+        padding: 20px 0;
+        border-top: 1px solid #f0d8a8;
+        border-bottom: 1px solid #f0d8a8;
+    }
+    
+    .like-btn, .dislike-btn {
+        padding: 8px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        background: #FFE9C2;
+    }
+    
+    .like-btn:hover {
+        background: #4caf50;
+        color: white;
+        transform: scale(1.05);
+    }
+    
+    .dislike-btn:hover {
+        background: #f44336;
+        color: white;
+        transform: scale(1.05);
+    }
+    
+    .comments-section {
+        margin-top: 40px;
+    }
+    
+    .comments-section h3 {
+        font-size: 24px;
+        color: #B47C2E;
+        margin-bottom: 20px;
+    }
+    
+    .comments-list {
+        margin-bottom: 30px;
+    }
+    
+    .comment {
+        background: #FFE9C2;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+    
+    .comment strong {
+        color: #B47C2E;
+        display: block;
+        margin-bottom: 8px;
+    }
+    
+    .comment p {
+        margin: 8px 0;
+        color: #555;
+    }
+    
+    .comment small {
+        color: #888;
+        font-size: 12px;
+    }
+    
+    .loading-comments {
+        text-align: center;
+        padding: 20px;
+        color: #888;
+    }
+    
+    .no-comments {
+        color: #888;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .comment-form-container h4 {
+        font-size: 18px;
+        color: #B47C2E;
+        margin-bottom: 15px;
+    }
+    
+    .comment-form-container textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #f0d8a8;
+        border-radius: 8px;
+        font-size: 14px;
+        font-family: inherit;
+        resize: vertical;
+        min-height: 80px;
+        margin-bottom: 10px;
+    }
+    
+    .comment-form-container textarea:focus {
+        outline: none;
+        border-color: #FED361;
+    }
+    
+    .btn-submit {
+        padding: 8px 20px;
+        background: #FED361;
+        color: #333;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-submit:hover {
+        background: #e5b840;
+        transform: translateY(-1px);
+    }
+    
+    .login-to-comment {
+        text-align: center;
+        padding: 20px;
+        background: #FFE9C2;
+        border-radius: 8px;
+    }
+    
+    .login-to-comment a {
+        color: #B47C2E;
+        text-decoration: none;
+        font-weight: bold;
+    }
+    
+    .login-to-comment a:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}

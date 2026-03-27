@@ -184,9 +184,6 @@
                     <button class="action-btn dislike-btn" onclick="toggleDislike({{ item.pattern.id }})">
                         👎 <span class="dislike-count" id="dislike-count-{{ item.pattern.id }}">{{ item.raitng.dislikes|default:0 }}</span>
                     </button>
-                    <button class="action-btn favorite-btn" onclick="toggleFavorite({{ item.pattern.id }})">
-                        ⭐ <span id="favorite-icon-{{ item.pattern.id }}">☆</span>
-                    </button>
                 </div>
             </div>
         {% empty %}

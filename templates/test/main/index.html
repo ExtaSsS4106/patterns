@@ -1,0 +1,225 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pattern Hub</title>
+    <link rel="stylesheet" href="{% static 'main/style.css' %}">
+</head>
+<body>
+    <div class="wrapper">
+        <header class="header">
+            <div class="header-content">
+                <div class="logo-area">
+                    <img src="{% static 'images/logo.png' %}" alt="Logo" class="logo" onerror="this.style.display='none'">
+                    <h1>Pattern hub</h1>
+                </div>
+                <div class="auth-buttons">
+                    {% if user.is_authenticated %}
+                        <div class="user-info">
+                            <span class="username">{{ user.username }}</span>
+                            <a href="{% url 'logout' %}" class="auth-btn logout">Выйти</a>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'sign_up' %}" class="auth-btn register">Зарегистрироваться</a>
+                        <a href="{% url 'login' %}" class="auth-btn login">Войти</a>
+                    {% endif %}
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <aside class="sidebar">
+                <nav class="sidebar-nav">
+                    <div class="nav-item">
+                        <a href="{% url 'index' %}" class="nav-header no-arrow">
+                            <span class="nav-title">🏠 Главная</span>
+                        </a>
+                    </div>
+
+                    {% for category in categories %}
+                    <div class="nav-item" data-category-id="{{ category.id }}">
+                        <div class="nav-header" onclick="toggleSubmenu(this)">
+                            <span class="nav-title">{{ category.title }}</span>
+                            <span class="arrow">▶</span>
+                        </div>
+                        <ul class="sub-nav">
+                            {% for pattern in patterns %}
+                                {% if pattern.categories.id == category.id %}
+                                    <li><a href="{% url 'pattern_detail' pattern.id %}">{{ pattern.title }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+                            <li class="view-all">
+                                <a href="{% url 'catalog' category.title %}" class="view-all-link">📚 Все паттерны →</a>
+                            </li>
+                        </ul>
+                    </div>
+                    {% endfor %}
+
+                    {% if user.is_authenticated %}
+                    <div class="nav-item">
+                        <a href="{% url 'profile' %}" class="nav-header no-arrow">
+                            <span class="nav-title">⭐ Избранное</span>
+                        </a>
+                    </div>
+                    {% endif %}
+
+                    {% if user.is_authenticated and user.is_superuser %}
+                    <div class="nav-item">
+                        <a href="{% url 'editor' %}" class="nav-header no-arrow">
+                            <span class="nav-title">✏️ Редактировать</span>
+                        </a>
+                    </div>
+                    {% endif %}
+                </nav>
+            </aside>
+
+            <main class="content">
+                {% block content %}
+                {% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <style>
+        .view-all {
+            margin-top: 8px;
+            padding-top: 5px;
+            border-top: 1px dashed #f0d8a8;
+        }
+        
+        .view-all-link {
+            color: #B47C2E !important;
+            font-weight: bold !important;
+            font-size: 13px !important;
+        }
+        
+        .view-all-link:hover {
+            color: #FED361 !important;
+            padding-left: 8px !important;
+        }
+        
+        .user-info {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .username {
+            color: white;
+            padding: 8px 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .auth-btn.logout {
+            background: #dc3545;
+        }
+        
+        .auth-btn.logout:hover {
+            background: #c82333;
+        }
+    </style>
+
+    <script>
+        function toggleSubmenu(element) {
+            const parent = element.closest('.nav-item');
+            const submenu = parent.querySelector('.sub-nav');
+            const arrow = parent.querySelector('.arrow');
+
+            if (submenu.style.display === 'none' || !submenu.style.display) {
+                submenu.style.display = 'block';
+                arrow.style.transform = 'rotate(90deg)';
+            } else {
+                submenu.style.display = 'none';
+                arrow.style.transform = 'rotate(0deg)';
+            }
+            
+            // Сохраняем состояние после клика
+            saveOpenMenus();
+        }
+
+        // Сохраняем состояние открытых подменю в localStorage
+        function saveOpenMenus() {
+            const openMenus = [];
+            document.querySelectorAll('.nav-item').forEach(item => {
+                const submenu = item.querySelector('.sub-nav');
+                if (submenu && submenu.style.display === 'block') {
+                    const title = item.querySelector('.nav-title');
+                    if (title) {
+                        openMenus.push(title.textContent.trim());
+                    }
+                }
+            });
+            localStorage.setItem('openMenus', JSON.stringify(openMenus));
+        }
+
+        function restoreOpenMenus() {
+            const savedMenus = localStorage.getItem('openMenus');
+            if (savedMenus) {
+                const openMenus = JSON.parse(savedMenus);
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    const title = item.querySelector('.nav-title');
+                    if (title && openMenus.includes(title.textContent.trim())) {
+                        const submenu = item.querySelector('.sub-nav');
+                        const arrow = item.querySelector('.arrow');
+                        if (submenu && submenu.style.display !== 'block') {
+                            submenu.style.display = 'block';
+                            if (arrow) arrow.style.transform = 'rotate(90deg)';
+                        }
+                    }
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Сначала все подменю скрываем
+            const submenus = document.querySelectorAll('.sub-nav');
+            submenus.forEach(function(submenu) {
+                submenu.style.display = 'none';
+                // Сбрасываем стрелки
+                const arrow = submenu.closest('.nav-item')?.querySelector('.arrow');
+                if (arrow) arrow.style.transform = 'rotate(0deg)';
+            });
+            
+            // Затем восстанавливаем сохраненные открытые меню
+            restoreOpenMenus();
+            
+            // Сохраняем состояние при клике (уже добавлено в toggleSubmenu)
+        });
+        
+        // Подсветка активной страницы
+        function highlightActiveLink() {
+            const currentUrl = window.location.pathname;
+            const links = document.querySelectorAll('.sub-nav a, .nav-header a');
+            
+            links.forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && currentUrl === href) {
+                    link.style.color = '#FED361';
+                    link.style.fontWeight = 'bold';
+                    
+                    // Открываем родительское подменю если оно закрыто
+                    const parentItem = link.closest('.nav-item');
+                    if (parentItem) {
+                        const submenu = parentItem.querySelector('.sub-nav');
+                        const arrow = parentItem.querySelector('.arrow');
+                        if (submenu && submenu.style.display !== 'block') {
+                            submenu.style.display = 'block';
+                            if (arrow) arrow.style.transform = 'rotate(90deg)';
+                            // Сохраняем состояние
+                            saveOpenMenus();
+                        }
+                    }
+                }
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            highlightActiveLink();
+        });
+    </script>
+</body>
+</html>
